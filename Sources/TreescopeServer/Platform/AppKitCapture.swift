@@ -102,6 +102,15 @@ extension CaptureEngine {
             }
         }
 
+        // Standalone CALayers. Always included for SwiftUI hosting views; else
+        // gated by the option. (AppKit layer y-geometry is best-effort.)
+        if (options.includeLayers || isHosting), view.wantsLayer, let layer = view.layer {
+            children.append(contentsOf: captureLayerChildren(
+                of: layer,
+                absoluteOrigin: Point(x: absFrame.x, y: absFrame.y),
+                options: options, path: "\(path)/layer", depth: depth))
+        }
+
         return ViewNode(
             id: id,
             kind: .nsView,
@@ -244,11 +253,11 @@ extension CaptureEngine {
     // MARK: Highlight
 
     func highlight(nodeID: String?) -> Bool {
-        // Remove any existing overlay.
-        (highlightRef?.value as? NSView)?.removeFromSuperview()
-        highlightRef = nil
+        clearHighlightOverlay()
 
-        guard let nodeID, let view = object(for: nodeID) as? NSView else { return nodeID == nil }
+        guard let nodeID, let object = object(for: nodeID) else { return nodeID == nil }
+        if let layer = object as? CALayer { return highlightLayer(layer) }
+        guard let view = object as? NSView else { return false }
         let overlay = NSView(frame: view.bounds)
         overlay.wantsLayer = true
         overlay.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.18).cgColor

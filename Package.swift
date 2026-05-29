@@ -11,12 +11,9 @@ let package = Package(
     products: [
         // Shared wire/data model. Pure Foundation, every platform.
         .library(name: "TreescopeProtocol", targets: ["TreescopeProtocol"]),
-        // Debug-only runtime injected into the app being inspected.
+        // Debug-only runtime injected into the app being inspected. Serves the
+        // browser viewer over loopback HTTP + WebSocket.
         .library(name: "TreescopeServer", targets: ["TreescopeServer"]),
-        // Client connection + view models powering the viewer.
-        .library(name: "TreescopeViewerCore", targets: ["TreescopeViewerCore"]),
-        // The macOS viewer GUI.
-        .executable(name: "TreescopeApp", targets: ["TreescopeApp"]),
         // A sample app that embeds the server, used for end-to-end testing.
         .executable(name: "TreescopeDemo", targets: ["TreescopeDemo"]),
     ],
@@ -26,19 +23,12 @@ let package = Package(
         ),
         .target(
             name: "TreescopeServer",
-            dependencies: ["TreescopeProtocol"]
-        ),
-        .target(
-            name: "TreescopeViewerCore",
-            dependencies: ["TreescopeProtocol"]
-        ),
-        .executableTarget(
-            name: "TreescopeApp",
-            dependencies: ["TreescopeViewerCore", "TreescopeProtocol"]
+            dependencies: ["TreescopeProtocol"],
+            resources: [.copy("Resources/viewer.html")]
         ),
         .executableTarget(
             name: "TreescopeDemo",
-            dependencies: ["TreescopeServer", "TreescopeViewerCore", "TreescopeProtocol"]
+            dependencies: ["TreescopeServer", "TreescopeProtocol"]
         ),
         .testTarget(
             name: "TreescopeProtocolTests",
@@ -47,10 +37,6 @@ let package = Package(
         .testTarget(
             name: "TreescopeServerTests",
             dependencies: ["TreescopeServer", "TreescopeProtocol"]
-        ),
-        .testTarget(
-            name: "TreescopeViewerCoreTests",
-            dependencies: ["TreescopeViewerCore", "TreescopeServer", "TreescopeProtocol"]
         ),
     ]
 )

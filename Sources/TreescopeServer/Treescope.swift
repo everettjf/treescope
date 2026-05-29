@@ -13,6 +13,8 @@ import TreescopeProtocol
 /// #endif
 /// ```
 ///
+/// Then open `http://127.0.0.1:47761` in any browser to inspect the running app.
+///
 /// This is intended to be linked **Debug-only**. Because it is excluded from
 /// Release builds, any reliance on private SwiftUI debug data carries no App
 /// Store review risk.
@@ -21,7 +23,7 @@ public final class Treescope {
     public static let shared = Treescope()
 
     private let engine = CaptureEngine()
-    private var server: TransportServer?
+    private var server: HTTPServer?
     private let lock = NSLock()
 
     /// Emits diagnostic log lines (defaults to `print`). Set to `nil` to silence.
@@ -52,13 +54,19 @@ public final class Treescope {
         lock.lock(); defer { lock.unlock() }
         guard !isRunning else { return }
 
-        let serviceName = engineServiceName()
-        let server = TransportServer(serviceName: serviceName) { [weak self] message, respond in
+        let routes = HTTPServer.Routes(
+            viewerHTML: { [weak self] in self?.loadViewerHTML() ?? Data(Self.fallbackHTML.utf8) },
+            snapshotPNG: { [weak self] nodeID, scale in
+                guard let self else { return nil }
+                return self.mainSync { self.engine.snapshotImage(nodeID: nodeID, scale: scale)?.data }
+            })
+
+        let server = HTTPServer(serviceName: engineServiceName(), routes: routes) { [weak self] message, respond in
             self?.handle(message, respond: respond)
         }
         server.onLog = { [weak self] in self?.logger?($0) }
         server.onReady = { [weak self] port in
-            self?.logger?("[Treescope] Ready. Connect the viewer to 127.0.0.1:\(port)")
+            self?.logger?("[Treescope] Ready. Open http://127.0.0.1:\(port) in your browser.")
         }
         self.server = server
         self.isRunning = true
@@ -122,12 +130,27 @@ public final class Treescope {
         }
     }
 
+    // MARK: Resources
+
+    private func loadViewerHTML() -> Data? {
+        guard let url = Bundle.module.url(forResource: "viewer", withExtension: "html") else { return nil }
+        return try? Data(contentsOf: url)
+    }
+
+    static let fallbackHTML = """
+    <!doctype html><html><body style="font-family:sans-serif;background:#1e1e1e;color:#eee;padding:2rem">
+    <h1>Treescope viewer asset missing</h1><p>Rebuild the package with the bundled viewer.</p></body></html>
+    """
+
+    // MARK: Threading
+
     private func onMain(_ work: @escaping () -> Void) {
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        if Thread.isMainThread { work() } else { DispatchQueue.main.async(execute: work) }
+    }
+
+    private func mainSync<T>(_ work: () -> T) -> T {
+        if Thread.isMainThread { return work() }
+        return DispatchQueue.main.sync(execute: work)
     }
 
     private func engineServiceName() -> String {

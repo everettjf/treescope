@@ -1,5 +1,8 @@
 import Foundation
 import TreescopeProtocol
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
 
 /// Weak holder so the snapshot registry never extends a view's lifetime.
 final class WeakObject {
@@ -44,6 +47,9 @@ public final class CaptureEngine {
     /// Renders a snapshot image for a node, if its object is still alive.
     public func snapshotImage(nodeID: String, scale: Double) -> SnapshotImage? {
         guard let object = registry[nodeID]?.value else { return nil }
+        #if canImport(QuartzCore)
+        if let layer = object as? CALayer { return renderLayerSnapshot(layer, nodeID: nodeID, scale: scale) }
+        #endif
         return renderSnapshot(object: object, nodeID: nodeID, scale: scale)
     }
 
@@ -52,6 +58,9 @@ public final class CaptureEngine {
         guard let object = registry[nodeID]?.value else {
             return (false, "node no longer exists")
         }
+        #if canImport(QuartzCore)
+        if let layer = object as? CALayer { return setLayerAttribute(on: layer, keyPath: keyPath, value: value) }
+        #endif
         return setAttribute(on: object, keyPath: keyPath, value: value)
     }
 

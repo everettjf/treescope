@@ -103,6 +103,15 @@ extension CaptureEngine {
             }
         }
 
+        // Standalone CALayers. Always included for SwiftUI hosting views (so the
+        // canvas gets real rendered geometry); otherwise gated by the option.
+        if options.includeLayers || isHosting {
+            children.append(contentsOf: captureLayerChildren(
+                of: view.layer,
+                absoluteOrigin: Point(x: Double(absFrame.minX), y: Double(absFrame.minY)),
+                options: options, path: "\(path)/layer", depth: depth))
+        }
+
         var node = ViewNode(
             id: id,
             kind: view is UIWindow ? .window : .uiView,
@@ -267,10 +276,11 @@ extension CaptureEngine {
     // MARK: Highlight
 
     func highlight(nodeID: String?) -> Bool {
-        (highlightRef?.value as? UIView)?.removeFromSuperview()
-        highlightRef = nil
+        clearHighlightOverlay()
 
-        guard let nodeID, let view = object(for: nodeID) as? UIView else { return nodeID == nil }
+        guard let nodeID, let object = object(for: nodeID) else { return nodeID == nil }
+        if let layer = object as? CALayer { return highlightLayer(layer) }
+        guard let view = object as? UIView else { return false }
         let overlay = UIView(frame: view.bounds)
         overlay.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.18)
         overlay.layer.borderColor = UIColor.systemBlue.cgColor
