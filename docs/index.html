@@ -177,6 +177,24 @@ Treescope.start()   // serves http://127.0.0.1:47761
       </ol>
 
       <div class="mt-12 rounded-2xl border border-line card p-6">
+        <h3 class="font-semibold">On a physical device? Forward over USB</h3>
+        <p class="mt-1 text-sm text-zinc-400">
+          The server listens on <code>127.0.0.1</code> only. On a real iPhone/iPad that loopback is the
+          <em>device</em>, not your Mac — so tunnel it over USB with <code>iproxy</code>
+          (from <a href="https://github.com/libimobiledevice/libimobiledevice" class="text-accent hover:underline">libimobiledevice</a>):
+        </p>
+        <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>brew install libimobiledevice
+
+# with the device plugged in over USB and the app running:
+iproxy 47761 47761           # Mac:47761 → device 127.0.0.1:47761
+open http://127.0.0.1:47761  # inspect it from your Mac browser</code></pre>
+        <p class="mt-2 text-xs text-zinc-500">
+          <code>iproxy</code> tunnels through usbmuxd to the device's loopback, so no app changes
+          are needed. Leave it running for the session.
+        </p>
+      </div>
+
+      <div class="mt-6 rounded-2xl border border-line card p-6">
         <h3 class="font-semibold">Try it in 30 seconds</h3>
         <p class="mt-1 text-sm text-zinc-400">Clone and run the bundled demo:</p>
         <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>git clone https://github.com/everettjf/treescope

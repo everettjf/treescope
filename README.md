@@ -140,6 +140,25 @@ Run your app, then open **`http://127.0.0.1:47761`** in any browser.
 (For the iOS Simulator, `127.0.0.1` on your Mac reaches the app because the simulator shares the
 host network stack.)
 
+### On a physical device
+
+The server listens on `127.0.0.1` only, so on a real iPhone/iPad that loopback is the *device*,
+not your Mac. Tunnel it over USB with `iproxy` (from
+[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)) — no app changes needed,
+since `iproxy` forwards through usbmuxd to the device's loopback:
+
+```bash
+brew install libimobiledevice
+
+# with the device plugged in over USB and the app running:
+iproxy 47761 47761           # Mac:47761 → device 127.0.0.1:47761
+open http://127.0.0.1:47761  # inspect it from your Mac browser
+```
+
+Leave `iproxy` running for the session. If `Treescope.start()` picked a different port (it scans
+forward when 47761 is busy — check the log line `listening on http://127.0.0.1:<port>`), forward
+that port instead.
+
 ### Try it end-to-end
 
 ```bash
@@ -199,8 +218,9 @@ npm run release        # tsc + vite build → single HTML → embed into Treesco
   reading for reflectable hosting views is **done**.)
 - Measurement guides, snapshot diffing, multi-window switching.
 
-(USB transport for physical devices is intentionally **not** pursued — the simulator + loopback
-covers the primary workflow, and Xcode's own View Hierarchy debugger covers on-device.)
+(A built-in USB transport is intentionally **not** pursued — the loopback server already works on a
+physical device by forwarding the port with `iproxy` over USB; see
+[On a physical device](#on-a-physical-device).)
 
 ## License
 
