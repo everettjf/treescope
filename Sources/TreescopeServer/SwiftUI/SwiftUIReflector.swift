@@ -155,6 +155,21 @@ public final class SwiftUIReflector {
             return nil
         case "EmptyView":
             return nil
+        case "LazyView", "_UnaryViewAdaptor", "ModifiedContent_Content", "_ViewModifier_Content":
+            // Transparent wrappers around a closure/thunk that Mirror can't see
+            // into (this is what a pure-SwiftUI `App`/`WindowGroup` root unwraps
+            // to: ModifiedContent<AnyView, RootModifier> → AnyView → LazyView).
+            // Evaluating `body` materializes the real declared content.
+            if !bodyIsNever(V.self) {
+                if let node = reflectOpen(view.body, path: path, depth: depth, pendingModifiers: pendingModifiers) {
+                    return node
+                }
+            }
+            // Fall back to scanning for a nested view if body didn't help.
+            if let inner = firstNestedView(in: view) {
+                return reflectOpen(inner, path: path, depth: depth, pendingModifiers: pendingModifiers)
+            }
+            return nil
         default:
             break
         }
