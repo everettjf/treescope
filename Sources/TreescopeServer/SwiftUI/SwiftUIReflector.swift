@@ -59,28 +59,50 @@ public final class SwiftUIReflector {
     /// property literally named `rootView` so we reflect the *declaration* tree
     /// (VStack/Text/…) rather than SwiftUI's resolved internal render graph
     /// (which a naive "first View" scan can surface once the app has laid out).
+    ///
+    /// Critically, this traverses **superclass mirrors** too: for a
+    /// pure-SwiftUI-lifecycle macOS window root the dynamic class is the generic
+    /// `AppKitWindowHostingView<…>` whose own `Mirror` has no children, but its
+    /// inherited `rootView` lives on the superclass `NSHostingViewBase` — only
+    /// reachable via `Mirror.superclassMirror`. Checking that recovers the full
+    /// declaration tree for the `WindowGroup`/`App`-lifecycle case.
     public static func findRootView(in object: AnyObject) -> Any? {
-        let mirror = Mirror(reflecting: object)
-        // 1) Exact-ish: a child labelled like "rootView" / "_rootView".
-        for child in mirror.children {
-            if let label = child.label?.lowercased(), label.contains("rootview"), isView(child.value) {
-                return child.value
-            }
+        // 1) A child labelled like "rootView", on the object or any superclass.
+        if let v = firstChild(of: object, where: { label, value in
+            label.contains("rootview") && isView(value)
+        }) { return v }
+
+        // 2) One level deeper (e.g. host.rootView), across superclasses.
+        for (_, value) in allChildren(of: object) {
+            if let inner = firstChild(of: value, where: { label, v in
+                label.contains("rootview") && isView(v)
+            }) { return inner }
         }
-        // 2) One level deeper (e.g. host.rootView).
-        for child in mirror.children {
-            for inner in Mirror(reflecting: child.value).children {
-                if let label = inner.label?.lowercased(), label.contains("rootview"), isView(inner.value) {
-                    return inner.value
-                }
-            }
+
+        // 3) Fallback: first View-typed stored property (object then nested).
+        if let v = firstChild(of: object, where: { _, value in isView(value) }) { return v }
+        for (_, value) in allChildren(of: object) {
+            if let inner = firstChild(of: value, where: { _, v in isView(v) }) { return inner }
         }
-        // 3) Fallback: first View-typed stored property.
-        for child in mirror.children where isView(child.value) { return child.value }
-        for child in mirror.children {
-            for inner in Mirror(reflecting: child.value).children where isView(inner.value) {
-                return inner.value
-            }
+        return nil
+    }
+
+    /// All (label, value) pairs from a value's Mirror **and every superclass
+    /// Mirror**, since class stored properties split across the inheritance chain.
+    private static func allChildren(of value: Any) -> [(String, Any)] {
+        var out: [(String, Any)] = []
+        var mirror: Mirror? = Mirror(reflecting: value)
+        while let m = mirror {
+            for child in m.children { out.append((child.label ?? "", child.value)) }
+            mirror = m.superclassMirror
+        }
+        return out
+    }
+
+    /// First child (across superclass mirrors) matching a (lowercasedLabel, value) predicate.
+    private static func firstChild(of value: Any, where predicate: (String, Any) -> Bool) -> Any? {
+        for (label, child) in allChildren(of: value) where predicate(label.lowercased(), child) {
+            return child
         }
         return nil
     }
