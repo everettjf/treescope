@@ -1,7 +1,8 @@
 # Treescope Web Viewer
 
-The browser viewer for [Treescope](../README.md). TypeScript + Vite, **no UI framework** — the
-tree, canvas (wireframe + snapshot + exploded 3D), and property inspector are plain DOM + CSS.
+The browser viewer for [Treescope](../README.md). **React + TypeScript + Tailwind CSS +
+shadcn/ui (Radix primitives)**, built with Vite. Bundles to a single self-contained HTML embedded
+into `TreescopeServer` so the inspected app serves it with zero external files.
 
 ## Develop
 
@@ -10,9 +11,8 @@ npm install
 npm run dev      # vite dev server with HMR
 ```
 
-The dev server proxies nothing — to talk to a real app, the viewer connects to `location.host`,
-so run it from the embedded build (below) when you need live data, or point a browser at the app's
-own `http://127.0.0.1:47761` after `npm run release`.
+The viewer connects to `location.host`, so for live data run a Treescope-embedding app and open its
+own `http://127.0.0.1:47761` after `npm run release` (the dev server has no backend of its own).
 
 ## Build & embed
 
@@ -22,15 +22,25 @@ npm run embed    # copy dist/index.html → ../Sources/TreescopeServer/Resources
 npm run release  # build + embed in one step
 ```
 
+## Stack
+
+- **React 18** — component model.
+- **Tailwind CSS** + **shadcn/ui** (new-york style) on **Radix UI** primitives — `src/components/ui/`.
+- **lucide-react** — icons.
+- **chart.js** / **react-chartjs-2** — available for stats panels (wired into deps).
+- **vite-plugin-singlefile** — inlines JS+CSS into one HTML for embedding.
+
 ## Layout
 
 | File | Role |
 |---|---|
 | `src/protocol.ts` | Wire types + helpers mirroring `Sources/TreescopeProtocol`. The `t`-discriminated JSON shapes match the Swift custom `Codable`. |
 | `src/client.ts` | WebSocket client; correlates responses by envelope id, exposes typed requests + the snapshot HTTP URL. |
-| `src/store.ts` | Observable state container: snapshot index, selection, expand set, filtering, display options. |
-| `src/ui/tree.ts` | Hierarchy sidebar with search + filtering. |
-| `src/ui/canvas.ts` | Visual canvas: wireframe + snapshot + exploded 3D, zoom/pan/select. |
-| `src/ui/inspector.ts` | Property inspector with typed rendering + live editing. |
-| `src/ui/toolbar.ts` | Top toolbar: toggles, zoom, connection status. |
-| `src/main.ts` | Wires it together; connection lifecycle + render loop. |
+| `src/store.ts` | Pure state helpers: node index, ancestor paths, filtering, flat visible list, colors. |
+| `src/hooks/useInspector.ts` | The app's state hook: connection lifecycle (with retry), selection, expand, options, live editing, keyboard move. |
+| `src/components/Tree.tsx` | Hierarchy sidebar: search + match highlight, hover↔canvas sync, scroll-to-selected. |
+| `src/components/Canvas.tsx` | Visual canvas: wireframe + snapshot + exploded 3D, zoom/pan/select, hover. |
+| `src/components/Inspector.tsx` | Property inspector with typed rendering + live editing (color picker, switches, text). |
+| `src/components/Toolbar.tsx` | Toolbar: toggles, zoom, connection status, node count. |
+| `src/components/ui/` | shadcn/ui components (button, toggle, switch, input, tooltip, badge, slider, tabs). |
+| `src/App.tsx` / `src/main.tsx` | Layout, splitters, global keyboard nav (↑/↓/←/→, ⌘R). |

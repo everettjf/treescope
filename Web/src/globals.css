@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 6% 10%;
+    --foreground: 240 5% 92%;
+    --card: 240 5% 13%;
+    --card-foreground: 240 5% 92%;
+    --primary: 211 100% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 240 5% 92%;
+    --muted: 240 4% 18%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 211 100% 52%;
+    --accent-foreground: 0 0% 100%;
+    --border: 240 4% 24%;
+    --input: 240 4% 24%;
+    --ring: 211 100% 52%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+}
+
+/* Thin scrollbars to match the dark IDE aesthetic. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Search-match highlight in the tree. */
+mark.ts-match { @apply bg-primary/40 text-foreground rounded-sm px-0.5; }
