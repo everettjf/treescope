@@ -38,6 +38,5 @@ First tagged release.
   wireframe + snapshot + exploded-3D + zoom/pan, property inspector with live editing, hover sync.
 - **iOS Simulator example** (`Examples/TreescopeiOSDemo`) with a headless WebSocket verifier.
 
-Known gap: a pure-SwiftUI-lifecycle macOS window root (`AppKitWindowHostingView`) has an empty
-`Mirror`, so its declaration tree isn't reachable there. USB physical-device transport is
-intentionally out of scope.
+USB physical-device transport is intentionally out of scope (simulator + loopback covers the
+primary workflow; Xcode's View Hierarchy covers on-device).
