@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swift:
+    name: Swift build & test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      - name: Verify the server compiles for iOS Simulator
+        run: |
+          xcodebuild -scheme TreescopeServer \
+            -destination 'generic/platform=iOS Simulator' \
+            build
+
+  web:
+    name: Web viewer build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check & build (single-file bundle)
+        run: npm run build
+
+      - name: Check the embedded viewer is up to date
+        run: |
+          npm run embed
+          if ! git diff --quiet -- ../Sources/TreescopeServer/Resources/viewer.html; then
+            echo "::error::Sources/TreescopeServer/Resources/viewer.html is stale."
+            echo "Run 'cd Web && npm run release' and commit the result."
+            exit 1
+          fi
