@@ -5,6 +5,16 @@
 >
 > *Put your SwiftUI tree under the scope.*
 
+<p>
+  <a href="https://github.com/everettjf/treescope/actions/workflows/ci.yml"><img src="https://github.com/everettjf/treescope/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://everettjf.github.io/treescope/"><img src="https://img.shields.io/badge/docs-website-0a84ff" alt="Website"></a>
+  <img src="https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS-blue" alt="Platforms">
+  <img src="https://img.shields.io/badge/Swift-5.9%2B-orange" alt="Swift">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
+</p>
+
+**🔭 [Website & tutorial →](https://everettjf.github.io/treescope/)**
+
 ![Treescope browser viewer](docs/viewer-screenshot.png)
 
 Treescope captures the live view hierarchy of a running iOS/macOS/tvOS app — UIKit, AppKit,
@@ -91,9 +101,9 @@ fields are surfaced and marked `(live)` (a model mutation shows up on the next c
 > **pure-SwiftUI-lifecycle macOS window root** (`AppKitWindowHostingView`) has an empty `Mirror`,
 > so its declaration tree isn't reachable there (the resolved render tree still is).
 
-A best-effort private `_viewDebugData` / `makeViewDebugData` probe (`ViewDebugDataExtractor`) is
-included and fully guarded; because the server is **Debug-only**, any private-API use carries no
-App Store review risk.
+The whole SwiftUI path uses only public reflection — no `_viewDebugData` / AttributeGraph private
+API. (Because the server is **Debug-only**, private API would carry no App Store review risk, but
+none is needed.)
 
 ---
 
