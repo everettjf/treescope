@@ -308,28 +308,88 @@ public final class SwiftUIReflector {
             if skipViews, child.value as? any View != nil { continue }
 
             var raw = child.value
-            // Unwrap property wrappers: a "_count" backing a "count" @State.
-            if label.hasPrefix("_"), let unwrapped = unwrapPropertyWrapper(raw) {
+            var isLive = false
+            // Unwrap property wrappers: a "_count" backing a "count" @State,
+            // preferring the LIVE value read from the installed graph location.
+            if label.hasPrefix("_"), let (unwrapped, live) = unwrapPropertyWrapper(raw) {
                 label.removeFirst()
                 raw = unwrapped
+                isLive = live
             }
             if skipViews, raw as? any View != nil { continue }
-            attrs.append(Attribute(title: label, value: ValueDescriber.describe(raw)))
+
+            // Expand ObservableObject-like reference values into their fields.
+            if let nested = objectFields(of: raw) {
+                attrs.append(Attribute(title: liveLabel(label, isLive), value: .nested(nested)))
+            } else {
+                attrs.append(Attribute(title: liveLabel(label, isLive), value: ValueDescriber.describe(raw)))
+            }
         }
         return attrs
     }
 
-    /// Best-effort read of a property wrapper's `wrappedValue`.
-    private func unwrapPropertyWrapper(_ value: Any) -> Any? {
+    /// Annotates a property name with a "(live)" suffix when its value was read
+    /// from the live AttributeGraph location rather than the Mirror seed.
+    private func liveLabel(_ label: String, _ isLive: Bool) -> String {
+        isLive ? "\(label) (live)" : label
+    }
+
+    /// Read of a property wrapper's value. Returns `(value, isLive)` where
+    /// `isLive` is true when read from the installed graph via `wrappedValue`.
+    /// Falls back to the Mirror `_value` seed for wrappers we can't read live.
+    private func unwrapPropertyWrapper(_ value: Any) -> (Any, Bool)? {
+        // 1) Live read via retroactive conformance (State, Binding, StateObject,
+        //    ObservedObject, AppStorage, ScaledMetric).
+        if let live = LiveProperty.read(value) {
+            return (live, true)
+        }
+        // 2) Seed fallback for the remaining wrappers (Environment, FocusState,
+        //    EnvironmentObject, SceneStorage, GestureState).
         let typeName = ValueDescriber.baseName(String(reflecting: type(of: value)))
         let wrappers: Set<String> = ["State", "Binding", "StateObject", "ObservedObject",
                                      "EnvironmentObject", "Environment", "FocusState",
                                      "ScaledMetric", "AppStorage", "SceneStorage", "GestureState"]
         guard wrappers.contains(typeName) else { return nil }
         for child in Mirror(reflecting: value).children where child.label == "_value" || child.label == "wrappedValue" {
-            return child.value
+            return (child.value, false)
         }
         return nil
+    }
+
+    /// If `value` is a reference type (e.g. an `ObservableObject`), returns its
+    /// stored properties as attributes — unwrapping `@Published` to its current
+    /// value — so models show their fields instead of just a class name.
+    private func objectFields(of value: Any) -> [Attribute]? {
+        let mirror = Mirror(reflecting: value)
+        guard mirror.displayStyle == .class, value as? any View == nil else { return nil }
+        var out: [Attribute] = []
+        for child in mirror.children {
+            guard var label = child.label else { continue }
+            var raw = child.value
+            if label.hasPrefix("_"), let published = publishedValue(raw) {
+                label.removeFirst()
+                raw = published
+            }
+            if raw as? any View != nil { continue }
+            out.append(Attribute(title: label, value: ValueDescriber.describe(raw)))
+            if out.count >= 24 { break }
+        }
+        return out.isEmpty ? nil : out
+    }
+
+    /// Extracts the current value from a `@Published` backing (`Published<V>`),
+    /// whose storage is an enum carrying either the value or a publisher.
+    private func publishedValue(_ value: Any) -> Any? {
+        guard ValueDescriber.baseName(String(reflecting: type(of: value))) == "Published" else { return nil }
+        func search(_ any: Any, _ depth: Int) -> Any? {
+            guard depth < 5 else { return nil }
+            for child in Mirror(reflecting: any).children {
+                if child.label == "value" { return child.value }
+                if let found = search(child.value, depth + 1) { return found }
+            }
+            return nil
+        }
+        return search(value, 0)
     }
 
     private func sectionsFor(modifiers: [Attribute], properties: [Attribute]) -> [AttributeSection] {
