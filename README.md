@@ -5,9 +5,12 @@
 >
 > *Put your SwiftUI tree under the scope.*
 
-Treescope captures the live view hierarchy of a running iOS/macOS/tvOS app — UIKit, AppKit
-**and SwiftUI** — and streams it to a native macOS viewer where you can browse the tree, inspect
-properties, see frames/snapshots, and even edit some properties live.
+![Treescope browser viewer](docs/viewer-screenshot.png)
+
+Treescope captures the live view hierarchy of a running iOS/macOS/tvOS app — UIKit, AppKit,
+**SwiftUI, and CALayers** — and serves it to a **browser-based viewer** where you can browse the
+tree, inspect properties, see frames/snapshots, view an exploded 3D layer view, and edit some
+properties live. No app to install: the inspected app hosts the viewer itself over loopback HTTP.
 
 The original [Lookin](https://github.com/QMUI/LookinServer) is open source but **UIKit-only**.
 Its successor [LookInside](https://github.com/LookInsideApp/LookInside) adds SwiftUI inspection —
