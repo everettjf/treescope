@@ -308,60 +308,58 @@ public final class SwiftUIReflector {
             if skipViews, child.value as? any View != nil { continue }
 
             var raw = child.value
-            var isLive = false
-            // Unwrap property wrappers: a "_count" backing a "count" @State,
-            // preferring the LIVE value read from the installed graph location.
-            if label.hasPrefix("_"), let (unwrapped, live) = unwrapPropertyWrapper(raw) {
+            // Unwrap property wrappers: a "_count" backing a "count" @State.
+            if label.hasPrefix("_"), let unwrapped = unwrapPropertyWrapper(raw) {
                 label.removeFirst()
                 raw = unwrapped
-                isLive = live
             }
             if skipViews, raw as? any View != nil { continue }
 
-            // Expand ObservableObject-like reference values into their fields.
+            // Reference-typed observable state (@StateObject/@ObservedObject) is
+            // shared by reference, so its current fields ARE live. Expand it and
+            // mark it; value-typed state shows its declared value (see below).
             if let nested = objectFields(of: raw) {
-                attrs.append(Attribute(title: liveLabel(label, isLive), value: .nested(nested)))
+                attrs.append(Attribute(title: "\(label) (live)", value: .nested(nested)))
             } else {
-                attrs.append(Attribute(title: liveLabel(label, isLive), value: ValueDescriber.describe(raw)))
+                attrs.append(Attribute(title: label, value: ValueDescriber.describe(raw)))
             }
         }
         return attrs
     }
 
-    /// Annotates a property name with a "(live)" suffix when its value was read
-    /// from the live AttributeGraph location rather than the Mirror seed.
-    private func liveLabel(_ label: String, _ isLive: Bool) -> String {
-        isLive ? "\(label) (live)" : label
-    }
-
-    /// Read of a property wrapper's value. Returns `(value, isLive)` where
-    /// `isLive` is true when read from the installed graph via `wrappedValue`.
-    /// Falls back to the Mirror `_value` seed for wrappers we can't read live.
-    private func unwrapPropertyWrapper(_ value: Any) -> (Any, Bool)? {
-        // 1) Live read via retroactive conformance (State, Binding, StateObject,
-        //    ObservedObject, AppStorage, ScaledMetric).
-        if let live = LiveProperty.read(value) {
-            return (live, true)
-        }
-        // 2) Seed fallback for the remaining wrappers (Environment, FocusState,
-        //    EnvironmentObject, SceneStorage, GestureState).
+    /// Reads a property wrapper's value via the public `wrappedValue` where it's
+    /// safe (retroactive `LiveReadableProperty` conformance), falling back to the
+    /// Mirror `_value` seed otherwise.
+    ///
+    /// Honest scope: for **value-typed** `@State`/`@Binding` on a hosting view's
+    /// reflected `rootView`, the AttributeGraph location isn't installed on the
+    /// struct copy we see (`_location == nil`, confirmed at runtime), so
+    /// `wrappedValue` returns the *declared* value — same as the seed. Genuinely
+    /// live values come from **reference-typed** `@StateObject`/`@ObservedObject`,
+    /// whose object is shared; those are expanded by `objectFields`.
+    private func unwrapPropertyWrapper(_ value: Any) -> Any? {
+        if let read = LiveProperty.read(value) { return read }
         let typeName = ValueDescriber.baseName(String(reflecting: type(of: value)))
         let wrappers: Set<String> = ["State", "Binding", "StateObject", "ObservedObject",
                                      "EnvironmentObject", "Environment", "FocusState",
                                      "ScaledMetric", "AppStorage", "SceneStorage", "GestureState"]
         guard wrappers.contains(typeName) else { return nil }
         for child in Mirror(reflecting: value).children where child.label == "_value" || child.label == "wrappedValue" {
-            return (child.value, false)
+            return child.value
         }
         return nil
     }
 
-    /// If `value` is a reference type (e.g. an `ObservableObject`), returns its
-    /// stored properties as attributes — unwrapping `@Published` to its current
-    /// value — so models show their fields instead of just a class name.
+    /// If `value` is an `ObservableObject`-like reference type, returns its stored
+    /// properties as attributes — unwrapping `@Published` to its current value —
+    /// so models show live fields instead of just a class name. Returns nil for
+    /// value types and views.
     private func objectFields(of value: Any) -> [Attribute]? {
         let mirror = Mirror(reflecting: value)
         guard mirror.displayStyle == .class, value as? any View == nil else { return nil }
+        // Only expand things that look like observable models, not arbitrary
+        // framework objects (which can be huge / cyclic).
+        guard value is any ObservableObject else { return nil }
         var out: [Attribute] = []
         for child in mirror.children {
             guard var label = child.label else { continue }
@@ -378,18 +376,21 @@ public final class SwiftUIReflector {
     }
 
     /// Extracts the current value from a `@Published` backing (`Published<V>`),
-    /// whose storage is an enum carrying either the value or a publisher.
+    /// whose `storage` is an enum: `.value(V)` before first observation, or
+    /// `.publisher(Publisher)` afterwards (the value living in the subject's
+    /// `currentValue`). Searches for `currentValue` first, then `value`.
     private func publishedValue(_ value: Any) -> Any? {
         guard ValueDescriber.baseName(String(reflecting: type(of: value))) == "Published" else { return nil }
-        func search(_ any: Any, _ depth: Int) -> Any? {
-            guard depth < 5 else { return nil }
-            for child in Mirror(reflecting: any).children {
-                if child.label == "value" { return child.value }
-                if let found = search(child.value, depth + 1) { return found }
+        func find(_ any: Any, label target: String, _ depth: Int) -> Any? {
+            guard depth < 6 else { return nil }
+            let mirror = Mirror(reflecting: any)
+            for child in mirror.children where child.label == target { return child.value }
+            for child in mirror.children {
+                if let found = find(child.value, label: target, depth + 1) { return found }
             }
             return nil
         }
-        return search(value, 0)
+        return find(value, label: "currentValue", 0) ?? find(value, label: "value", 0)
     }
 
     private func sectionsFor(modifiers: [Attribute], properties: [Attribute]) -> [AttributeSection] {

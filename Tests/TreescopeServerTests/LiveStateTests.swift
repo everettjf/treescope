@@ -2,12 +2,15 @@
 import XCTest
 import AppKit
 import SwiftUI
+import Combine
 @testable import TreescopeServer
 import TreescopeProtocol
 
-/// Verifies the AttributeGraph "live value" path: once a SwiftUI view is hosted,
-/// reflecting it surfaces the CURRENT `@State`/`@ObservedObject` values (read via
-/// the installed graph location), not just the initial Mirror seed.
+/// Verifies the genuinely-live introspection path: a hosting view's
+/// `@ObservedObject` holds the model by reference, so reflecting it surfaces the
+/// model's CURRENT `@Published` fields — and mutating the model then re-reflecting
+/// shows the new values. (Value-typed `@State` only yields its declared value;
+/// see `LiveProperty` for why — that's asserted too.)
 final class LiveStateTests: XCTestCase {
 
     final class Model: ObservableObject { @Published var ticks: Int; init(_ t: Int) { ticks = t } }
@@ -17,8 +20,8 @@ final class LiveStateTests: XCTestCase {
         @ObservedObject var model: Model
         var body: some View {
             VStack {
-                Text("Count \(count)")
-                Text("Ticks \(model.ticks)")
+                Text(verbatim: "Count \(count)")
+                Text(verbatim: "Ticks \(model.ticks)")
             }
         }
     }
@@ -45,10 +48,6 @@ final class LiveStateTests: XCTestCase {
         var out: [ViewNode] = []; root.forEachDepthFirst { out.append($0) }; return out
     }
 
-    private func texts(_ root: ViewNode) -> [String] {
-        allNodes(root).filter { $0.displayName == "Text" }.compactMap(\.label)
-    }
-
     private func attribute(_ root: ViewNode, titled prefix: String) -> Attribute? {
         for node in allNodes(root) {
             for section in node.sections {
@@ -59,46 +58,37 @@ final class LiveStateTests: XCTestCase {
     }
 
     @MainActor
-    func testStateValueIsReadAndMarkedLive() throws {
+    func testStateValueShowsDeclaredValue() throws {
         let hosting = host(Screen(model: Model(7)))
         let node = try XCTUnwrap(reflect(hosting))
-        // The @State count is surfaced as an attribute, labelled live.
+        // @State count surfaces as an attribute with its declared value.
         let count = try XCTUnwrap(attribute(node, titled: "count"))
         XCTAssertEqual(count.value, .integer(41))
-        XCTAssertTrue(count.title.contains("(live)"), "expected live marker, got \(count.title)")
+        // It is NOT marked live (value-typed state is not graph-backed here).
+        XCTAssertFalse(count.title.contains("(live)"), "value @State must not claim live: \(count.title)")
     }
 
     @MainActor
-    func testObservedObjectFieldsExpandAndAreLive() throws {
+    func testObservedObjectFieldsAreLiveAcrossMutation() throws {
         let model = Model(7)
         let hosting = host(Screen(model: model))
 
-        // Initially the body reflects the seed values.
-        var node = try XCTUnwrap(reflect(hosting))
-        XCTAssertTrue(texts(node).contains("Ticks 7"), "got \(texts(node))")
-
-        // The model attribute expands into nested fields (ticks).
-        let modelAttr = try XCTUnwrap(attribute(node, titled: "model"))
-        if case .nested(let fields) = modelAttr.value {
-            XCTAssertTrue(fields.contains { $0.title == "ticks" && $0.value == .integer(7) }, "got \(fields)")
-        } else {
-            XCTFail("expected nested model fields, got \(modelAttr.value)")
+        // The @ObservedObject model expands into nested fields, marked live.
+        var modelAttr = try XCTUnwrap(attribute(reflect(hosting)!, titled: "model"))
+        XCTAssertTrue(modelAttr.title.contains("(live)"), "model should be marked live: \(modelAttr.title)")
+        func ticks(_ a: Attribute) -> AttributeValue? {
+            if case .nested(let fields) = a.value { return fields.first { $0.title == "ticks" }?.value }
+            return nil
         }
+        XCTAssertEqual(ticks(modelAttr), .integer(7), "initial field: \(modelAttr.value)")
 
-        // Mutate the live model, pump the runloop, and re-reflect: the captured
-        // tree must now show the NEW value (proving we read live, not the seed).
+        // Mutate the live model, pump the runloop, re-reflect: the captured field
+        // must reflect the NEW value — proving we read the shared live object.
         model.ticks = 99
         RunLoop.current.run(until: Date().addingTimeInterval(0.15))
 
-        node = try XCTUnwrap(reflect(hosting))
-        XCTAssertTrue(texts(node).contains("Ticks 99"), "live body not updated: \(texts(node))")
-        let modelAttr2 = try XCTUnwrap(attribute(node, titled: "model"))
-        if case .nested(let fields) = modelAttr2.value {
-            XCTAssertTrue(fields.contains { $0.title == "ticks" && $0.value == .integer(99) },
-                          "live field not updated: \(fields)")
-        } else {
-            XCTFail("expected nested model fields")
-        }
+        modelAttr = try XCTUnwrap(attribute(reflect(hosting)!, titled: "model"))
+        XCTAssertEqual(ticks(modelAttr), .integer(99), "live field not updated: \(modelAttr.value)")
     }
 }
 #endif

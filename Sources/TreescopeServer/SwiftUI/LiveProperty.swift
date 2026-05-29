@@ -2,42 +2,40 @@
 import SwiftUI
 import Foundation
 
-/// Reads the **live** value of a SwiftUI property wrapper.
+/// Reads the value of a SwiftUI property wrapper through its public
+/// `wrappedValue`, via retroactive conformance + a dynamic cast. Uses only
+/// public API — no private symbols or ABI assumptions.
 ///
-/// SwiftUI installs `@State` / `@StateObject` / … onto a live AttributeGraph
-/// "location" once a view is hosted (confirmed at runtime: a reflected
-/// hosting-view `rootView` has a populated `_location`). Reading the wrapper's
-/// public `wrappedValue` then returns the **current** value, not the initial
-/// seed that `Mirror` exposes via the `_value` field.
+/// ## What is and isn't "live"
+/// We reflect a hosting view's `rootView`, which is the user's view *struct copy*.
+/// Confirmed at runtime: a value-typed `@State` on that copy has `_location ==
+/// nil` (SwiftUI installs the real, live state into the hosting view's private
+/// `viewGraph`, not this struct). So `State.wrappedValue` here returns the
+/// **declared** value, not a graph-backed live one — useful, but not "live".
 ///
-/// We get at that generically by retroactively conforming the wrappers to a
-/// local protocol and dynamic-casting `Any → LiveReadableProperty`. This uses
-/// only public API (`wrappedValue`) — no private symbols or ABI assumptions.
+/// Reference-typed observable state is different: `@ObservedObject` holds the
+/// actual object by reference, so reading it and its `@Published` fields yields
+/// **genuinely live** values. `SwiftUIReflector.objectFields` handles that and
+/// is the real win here.
 ///
-/// We deliberately do **not** conform wrappers whose getters can trap when read
-/// outside an installed view update (`@Environment`, `@FocusState`,
-/// `@SceneStorage`); for those we keep the Mirror seed value.
+/// We deliberately exclude wrappers whose getters can trap or fabricate when
+/// read off-graph: `@StateObject` (creates a fresh instance off-graph),
+/// `@Environment`, `@FocusState`, `@SceneStorage`, `@GestureState`.
 protocol LiveReadableProperty {
     var liveWrappedValue: Any { get }
 }
 
 extension State: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
 extension Binding: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
-extension StateObject: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
 extension ObservedObject: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
 extension AppStorage: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
 extension ScaledMetric: LiveReadableProperty { var liveWrappedValue: Any { wrappedValue } }
 
 enum LiveProperty {
-    /// Returns the wrapper's live value, or nil if it isn't one of the
-    /// safe-to-read wrappers.
+    /// Returns the wrapper's value, or nil if it isn't one of the safe-to-read
+    /// wrappers.
     static func read(_ wrapper: Any) -> Any? {
         (wrapper as? LiveReadableProperty)?.liveWrappedValue
-    }
-
-    /// True if the value is a wrapper we can read live (drives a "live" badge).
-    static func isLiveReadable(_ wrapper: Any) -> Bool {
-        wrapper is LiveReadableProperty
     }
 }
 #endif
