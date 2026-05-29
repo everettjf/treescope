@@ -14,14 +14,15 @@ cd Examples/TreescopeiOSDemo
 ./run.sh                       # generate + build + boot sim + install + launch + verify
 ```
 
-Or step by step:
+Or step by step (substitute any installed simulator for `$DEV`):
 
 ```bash
+DEV="iPhone 17 Pro"   # any device from `xcrun simctl list devices available`
 xcodegen generate
 xcodebuild -project TreescopeiOSDemo.xcodeproj -scheme TreescopeiOSDemo \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -sdk iphonesimulator -destination "platform=iOS Simulator,name=$DEV" \
   -derivedDataPath build build
-xcrun simctl boot "iPhone 16 Pro"
+xcrun simctl boot "$DEV"
 xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/TreescopeiOSDemo.app
 xcrun simctl launch booted com.treescope.iosdemo
 ```
@@ -35,7 +36,10 @@ network stack, so loopback reaches the app.
 
 ```bash
 node verify.mjs
-# VERIFY: handshake ok — TreescopeiOSDemo on iOS 26.3 (sim=true)
-# VERIFY: captured 119 nodes — 22 UIKit, 33 SwiftUI, 56 CALayer
+# VERIFY: handshake ok — TreescopeiOSDemo on iOS 26.2 (sim=true)
+# VERIFY: captured 96 nodes — 85 UIKit, 1 SwiftUI, 10 CALayer
+# VERIFY: labels seen: uikit.card | uikit.title | uikit.textField | uikit.count | uikit.button
 # VERIFY SUCCEEDED ✅
 ```
+
+(Exact counts vary by device/OS; the above is a real run on an iPhone 17 Pro, iOS 26.2.)
