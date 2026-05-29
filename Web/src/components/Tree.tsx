@@ -9,23 +9,27 @@ import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 
 export function Tree({ insp }: { insp: Inspector }) {
-  const { state, filteredRoots, select, hover, toggleExpand, setSearch } = insp;
+  const { state, filteredRoots, matchCount, select, hover, toggleExpand, setSearch } = insp;
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1.5 border-b border-border p-2">
         <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <Input
+          type="search"
           value={state.search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter views…"
+          placeholder="Filter views…  (/)"
           spellCheck={false}
           className="h-6"
         />
         {state.search && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSearch("")}>
-            <X className="h-3.5 w-3.5" />
-          </Button>
+          <>
+            <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{matchCount}</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSearch("")}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-auto py-1">

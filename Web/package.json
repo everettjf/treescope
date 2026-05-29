@@ -11,6 +11,8 @@
     "release": "npm run build && npm run embed"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slider": "^1.2.0",

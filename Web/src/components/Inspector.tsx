@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import type { Attribute, AttributeValue, RGBAColor, ViewNode } from "../protocol";
 import { displayValue, hexColor, Flag, hasFlag } from "../protocol";
 import { kindColor } from "../store";
@@ -6,6 +7,22 @@ import type { Inspector as InspState } from "../hooks/useInspector";
 import { Badge } from "./ui/badge";
 import { Switch } from "./ui/switch";
 import { Input } from "./ui/input";
+
+function CopyButton({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100"
+      title="Copy"
+      onClick={(e) => {
+        e.stopPropagation();
+        navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1000); });
+      }}
+    >
+      {done ? <Check className="h-3 w-3 text-[#30d158]" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
+}
 
 export function InspectorPanel({ insp }: { insp: InspState }) {
   const node = insp.selected;
@@ -31,9 +48,12 @@ function Header({ node }: { node: ViewNode }) {
   return (
     <div className="mb-3 flex items-center gap-2.5">
       <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: kindColor(node.kind) }} />
-      <div className="min-w-0">
+      <div className="group min-w-0 flex-1">
         <div className="font-semibold">{node.displayName}</div>
-        <div className="break-all font-mono text-[11px] text-muted-foreground">{node.className}</div>
+        <div className="flex items-start gap-1">
+          <div className="break-all font-mono text-[11px] text-muted-foreground">{node.className}</div>
+          <CopyButton text={node.className} />
+        </div>
       </div>
     </div>
   );

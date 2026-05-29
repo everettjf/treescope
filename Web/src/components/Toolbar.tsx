@@ -1,25 +1,29 @@
-import { RefreshCw, Grid3x3, Image, Box, Layers, EyeOff, Minus, Plus } from "lucide-react";
+import { RefreshCw, Grid3x3, Image, Box, Layers, EyeOff, Minus, Plus, Keyboard, Crosshair } from "lucide-react";
 import { countNodes } from "../store";
 import type { Inspector } from "../hooks/useInspector";
 import { Button } from "./ui/button";
 import { Toggle } from "./ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Stats } from "./Stats";
 import { cn } from "../lib/utils";
 
-export function Toolbar({ insp }: { insp: Inspector }) {
-  const { state, setOption, refresh } = insp;
+export function Toolbar({ insp, onHelp }: { insp: Inspector; onHelp: () => void }) {
+  const { state, setOption, refresh, requestFocus } = insp;
   const { options, serverInfo, snapshot, connection } = state;
   const device = serverInfo?.device;
 
   return (
     <div className="flex h-[46px] shrink-0 items-center gap-3 border-b border-border bg-card px-3">
-      <div className="min-w-[160px]">
-        <div className="text-sm font-semibold leading-tight">{device?.appName ?? "Treescope"}</div>
-        {device && (
-          <div className="text-[10px] text-muted-foreground">
-            {device.osName} {device.osVersion} · {device.deviceModel}
-          </div>
-        )}
+      <div className="flex min-w-[150px] items-center gap-2">
+        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/20 text-primary">🔭</div>
+        <div>
+          <div className="text-sm font-semibold leading-tight">{device?.appName ?? "Treescope"}</div>
+          {device && (
+            <div className="text-[10px] text-muted-foreground">
+              {device.osName} {device.osVersion} · {device.deviceModel}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-wrap items-center gap-1.5">
@@ -32,12 +36,18 @@ export function Toolbar({ insp }: { insp: Inspector }) {
                    onClick={() => setOption("showWireframe", !options.showWireframe)} />
         <ToggleBtn label="Snapshots" icon={<Image className="h-3.5 w-3.5" />} on={options.showSnapshots}
                    onClick={() => setOption("showSnapshots", !options.showSnapshots)} />
-        <ToggleBtn label="Exploded 3D" icon={<Box className="h-3.5 w-3.5" />} on={options.exploded}
+        <ToggleBtn label="3D" icon={<Box className="h-3.5 w-3.5" />} on={options.exploded}
                    onClick={() => setOption("exploded", !options.exploded)} />
-        <ToggleBtn label="CALayers (re-fetches)" icon={<Layers className="h-3.5 w-3.5" />} on={options.includeLayers}
+        <ToggleBtn label="Layers" icon={<Layers className="h-3.5 w-3.5" />} on={options.includeLayers}
                    onClick={() => setOption("includeLayers", !options.includeLayers)} />
-        <ToggleBtn label="Hide system views" icon={<EyeOff className="h-3.5 w-3.5" />} on={options.hideSystem}
+        <ToggleBtn label="System" icon={<EyeOff className="h-3.5 w-3.5" />} on={options.hideSystem}
                    onClick={() => setOption("hideSystem", !options.hideSystem)} />
+
+        <Tip label="Focus selected (F)">
+          <span><Button variant="ghost" size="icon" onClick={requestFocus} disabled={!insp.selected}>
+            <Crosshair className="h-3.5 w-3.5" />
+          </Button></span>
+        </Tip>
 
         <div className="ml-1 flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => setOption("zoom", Math.max(0.1, options.zoom - 0.2))}>
@@ -53,13 +63,19 @@ export function Toolbar({ insp }: { insp: Inspector }) {
         </div>
       </div>
 
-      <div className="min-w-[150px] text-right text-[11px]">
-        <span className={cn(
-          connection === "connected" ? "text-[#30d158]" : connection === "failed" ? "text-[#ff453a]" : "text-muted-foreground",
-        )}>
-          {statusText(connection)}
-        </span>
-        {snapshot && <span className="text-muted-foreground"> · {countNodes(snapshot)} nodes</span>}
+      <div className="flex items-center gap-1">
+        <Stats snapshot={snapshot} />
+        <Tip label="Keyboard shortcuts (?)">
+          <Button variant="ghost" size="icon" onClick={onHelp}><Keyboard className="h-3.5 w-3.5" /></Button>
+        </Tip>
+        <div className="min-w-[120px] text-right text-[11px]">
+          <span className={cn(
+            connection === "connected" ? "text-[#30d158]" : connection === "failed" ? "text-[#ff453a]" : "text-muted-foreground",
+          )}>
+            {statusText(connection)}
+          </span>
+          {snapshot && <span className="text-muted-foreground"> · {countNodes(snapshot)}</span>}
+        </div>
       </div>
     </div>
   );
@@ -68,7 +84,7 @@ export function Toolbar({ insp }: { insp: Inspector }) {
 function ToggleBtn({ label, icon, on, onClick }: { label: string; icon: React.ReactNode; on: boolean; onClick: () => void }) {
   return (
     <Tip label={label}>
-      <Toggle size="sm" pressed={on} onPressedChange={onClick}>{icon}<span className="ml-1">{label.split(" ")[0]}</span></Toggle>
+      <Toggle size="sm" pressed={on} onPressedChange={onClick}>{icon}<span className="ml-1">{label}</span></Toggle>
     </Tip>
   );
 }

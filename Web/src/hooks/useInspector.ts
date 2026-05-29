@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Client } from "../client";
 import type { AttributeValue, HierarchyOptions, ViewNode } from "../protocol";
 import {
-  type State, initialState, indexNodes, pathTo, autoExpandIDs, displayRoots, visibleList,
+  type State, type DisplayOptions, initialState, indexNodes, pathTo, autoExpandIDs, displayRoots, visibleList,
 } from "../store";
+
+const OPTIONS_KEY = "treescope.options";
+
+function loadOptions(): DisplayOptions {
+  try {
+    const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || "{}");
+    return { ...initialState.options, ...saved };
+  } catch { return initialState.options; }
+}
 
 type Action =
   | { type: "patch"; patch: Partial<State> }
@@ -11,7 +20,7 @@ type Action =
   | { type: "select"; id: string; ancestors: string[] }
   | { type: "toggleExpand"; id: string }
   | { type: "setExpanded"; ids: Set<string> }
-  | { type: "patchOptions"; patch: Partial<State["options"]> };
+  | { type: "patchOptions"; patch: Partial<DisplayOptions> };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -28,7 +37,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, expanded };
     }
     case "setExpanded": return { ...state, expanded: action.ids };
-    case "patchOptions": return { ...state, options: { ...state.options, ...action.patch } };
+    case "patchOptions": {
+      const options = { ...state.options, ...action.patch };
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify(options)); } catch {}
+      return { ...state, options };
+    }
   }
 }
 
@@ -37,31 +50,35 @@ export interface Inspector {
   index: Map<string, ViewNode>;
   selected?: ViewNode;
   filteredRoots: ViewNode[];
+  matchCount: number;
+  focusSignal: number;
   client: Client;
   refresh: () => void;
+  reconnect: () => void;
   select: (id: string) => void;
   hover: (id: string | undefined) => void;
   toggleExpand: (id: string) => void;
   setExpanded: (ids: Set<string>) => void;
   setSearch: (q: string) => void;
-  setOption: <K extends keyof State["options"]>(key: K, value: State["options"][K]) => void;
+  setOption: <K extends keyof DisplayOptions>(key: K, value: DisplayOptions[K]) => void;
   setAttribute: (nodeID: string, keyPath: string, value: AttributeValue) => void;
   moveSelection: (delta: number) => void;
+  requestFocus: () => void;
 }
 
 export function useInspector(): Inspector {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, { ...initialState, options: loadOptions() });
+  const [focusSignal, setFocusSignal] = useState(0);
   const clientRef = useRef<Client>();
   if (!clientRef.current) clientRef.current = new Client();
   const client = clientRef.current;
-
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const currentOptions = useCallback((): HierarchyOptions => ({
     includeSwiftUI: true,
     includeLayers: stateRef.current.options.includeLayers,
-    hideSystemViews: false, // filtered client-side so toggling is instant
+    hideSystemViews: false,
     requestSnapshots: true,
     maxDepth: 0,
   }), []);
@@ -108,7 +125,17 @@ export function useInspector(): Inspector {
     if (next) select(next.id);
   }, [select]);
 
-  // Connection lifecycle with retry.
+  const boot = useCallback(async () => {
+    try {
+      await client.connect();
+      const info = await client.handshake();
+      dispatch({ type: "patch", patch: { serverInfo: info } });
+      await refresh();
+    } catch {
+      setTimeout(() => { if (stateRef.current.connection !== "connected") void boot(); }, 2000);
+    }
+  }, [client, refresh]);
+
   useEffect(() => {
     let cancelled = false;
     client.onState = (connection, detail) =>
@@ -117,20 +144,9 @@ export function useInspector(): Inspector {
       if (event.t === "hierarchyChanged") void refresh();
       if (event.t === "willDisconnect") client.disconnect();
     };
-    const boot = async () => {
-      if (cancelled) return;
-      try {
-        await client.connect();
-        const info = await client.handshake();
-        dispatch({ type: "patch", patch: { serverInfo: info } });
-        await refresh();
-      } catch {
-        if (!cancelled) setTimeout(boot, 2000);
-      }
-    };
-    void boot();
+    if (!cancelled) void boot();
     return () => { cancelled = true; client.disconnect(); };
-  }, [client, refresh]);
+  }, [client, boot, refresh]);
 
   const index = useMemo(
     () => (state.snapshot ? indexNodes(state.snapshot) : new Map<string, ViewNode>()),
@@ -141,19 +157,33 @@ export function useInspector(): Inspector {
     () => displayRoots(state.snapshot?.roots ?? [], state.search, state.options.hideSystem),
     [state.snapshot, state.search, state.options.hideSystem],
   );
+  const matchCount = useMemo(() => {
+    const q = state.search.trim().toLowerCase();
+    if (!q || !state.snapshot) return 0;
+    let n = 0;
+    const walk = (node: ViewNode) => {
+      if (node.displayName.toLowerCase().includes(q) || node.className.toLowerCase().includes(q)
+        || (node.label?.toLowerCase().includes(q) ?? false)) n++;
+      node.children.forEach(walk);
+    };
+    state.snapshot.roots.forEach(walk);
+    return n;
+  }, [state.snapshot, state.search]);
 
   return {
-    state, index, selected, filteredRoots, client,
+    state, index, selected, filteredRoots, matchCount, focusSignal, client,
     refresh: () => void refresh(),
+    reconnect: () => { dispatch({ type: "patch", patch: { connection: "connecting", error: undefined } }); void boot(); },
     select, hover,
     toggleExpand: (id) => dispatch({ type: "toggleExpand", id }),
     setExpanded: (ids) => dispatch({ type: "setExpanded", ids }),
     setSearch: (q) => dispatch({ type: "patch", patch: { search: q } }),
     setOption: (key, value) => {
-      dispatch({ type: "patchOptions", patch: { [key]: value } as Partial<State["options"]> });
+      dispatch({ type: "patchOptions", patch: { [key]: value } as Partial<DisplayOptions> });
       if (key === "includeLayers") void refresh();
     },
     setAttribute,
     moveSelection,
+    requestFocus: () => setFocusSignal((n) => n + 1),
   };
 }
