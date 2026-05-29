@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-05-29
+
+- **Physical-device access documented.** The loopback server is reachable on a real iPhone/iPad by
+  forwarding the port over USB with `iproxy` (libimobiledevice) — no app changes needed; documented
+  in the README and website.
 - **Pure-SwiftUI window roots fully captured.** A pure-`App`/`WindowGroup` macOS window root
   (`AppKitWindowHostingView`, empty leaf `Mirror`) now yields its real declaration tree, via
   superclass-mirror traversal + descending SwiftUI's `LazyView` thunk wrapper. The last reflection
