@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- **Pure-SwiftUI window roots fully captured.** A pure-`App`/`WindowGroup` macOS window root
+  (`AppKitWindowHostingView`, empty leaf `Mirror`) now yields its real declaration tree, via
+  superclass-mirror traversal + descending SwiftUI's `LazyView` thunk wrapper. The last reflection
+  gap is closed; all capture is still public-API-only.
+- **Interactive exploded 3D canvas.** Drag-to-orbit (X/Y), per-axis angle sliders, layer-depth
+  control, ⌥-drag pan, double-click reset, layered snapshots with depth shadows.
+- **Web viewer UX overhaul** (React + Tailwind + shadcn/ui): connection overlay with retry,
+  ancestor breadcrumbs, a Chart.js node-kind stats popover, full keyboard nav + shortcuts dialog
+  (`?`), focus-selected (`F`), search match count + highlight, copy-to-clipboard, persisted layout.
+- **GitHub Pages site** (landing + tutorial) at https://everettjf.github.io/treescope/, deployed
+  from `docs/` via Actions.
+- **Docs:** README badges + website link; CONTRIBUTING layout map; removed dead
+  `ViewDebugDataExtractor`.
+- **iOS Simulator example** verified end-to-end (120 nodes: UIKit + SwiftUI + CALayer).
+
 ## 0.1.0
 
 First tagged release.
