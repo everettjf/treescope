@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treescope — open-source SwiftUI · UIKit · AppKit view inspector</title>
+  <meta name="description" content="A free, open-source runtime view inspector for SwiftUI, UIKit and AppKit — viewed in your browser. A Lookin / LookInside alternative with open SwiftUI tree inspection." />
+  <meta property="og:title" content="Treescope" />
+  <meta property="og:description" content="Open-source SwiftUI + UIKit/AppKit view inspector, in your browser." />
+  <meta property="og:image" content="viewer-screenshot.png" />
+  <meta name="theme-color" content="#0a84ff" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          ink: "#0d0d0f", panel: "#161618", line: "#2a2a2e",
+          accent: "#0a84ff", swiftui: "#ff9f0a", layer: "#bf5af2", view: "#30d158",
+        },
+        fontFamily: { mono: ["ui-monospace","SFMono-Regular","Menlo","monospace"] },
+      } },
+    };
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    .glow { background: radial-gradient(60% 50% at 50% 0%, rgba(10,132,255,0.18), transparent 70%); }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)); }
+    pre { tab-size: 2; }
+    .shot { box-shadow: 0 24px 80px -20px rgba(0,0,0,0.7); }
+  </style>
+</head>
+<body class="bg-ink text-zinc-100 antialiased">
+
+  <!-- Nav -->
+  <header class="sticky top-0 z-30 border-b border-line/60 bg-ink/80 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+      <a href="#top" class="flex items-center gap-2 font-semibold">
+        <span class="text-xl">🔭</span> Treescope
+      </a>
+      <nav class="flex items-center gap-5 text-sm text-zinc-300">
+        <a href="#features" class="hover:text-white">Features</a>
+        <a href="#start" class="hover:text-white">Quick start</a>
+        <a href="#how" class="hover:text-white">How it works</a>
+        <a href="https://github.com/everettjf/treescope" class="rounded-lg bg-white/10 px-3 py-1.5 font-medium hover:bg-white/20">GitHub ★</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="glow relative overflow-hidden">
+      <div class="mx-auto max-w-6xl px-5 pb-10 pt-20 text-center">
+        <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 text-xs text-zinc-300">
+          <span class="h-1.5 w-1.5 rounded-full bg-view"></span> MIT licensed · zero-install browser viewer
+        </div>
+        <h1 class="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">
+          Put your <span class="text-swiftui">SwiftUI</span> tree under the scope.
+        </h1>
+        <p class="mx-auto mt-5 max-w-2xl text-lg text-zinc-400">
+          An open-source runtime <strong class="text-zinc-200">view inspector</strong> for SwiftUI, UIKit
+          and AppKit. Your app serves a browser viewer over loopback — browse the tree, inspect
+          properties, see snapshots and an exploded 3D view, and edit live.
+        </p>
+        <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <a href="#start" class="rounded-xl bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent/90">Get started</a>
+          <a href="https://github.com/everettjf/treescope" class="rounded-xl border border-line bg-panel px-5 py-2.5 font-semibold hover:bg-white/5">View on GitHub</a>
+        </div>
+        <p class="mt-4 text-xs text-zinc-500">A free alternative to Lookin / LookInside — with the SwiftUI part open.</p>
+
+        <div class="mt-12">
+          <img src="viewer-screenshot.png" alt="Treescope viewer" class="shot mx-auto w-full max-w-5xl rounded-xl border border-line" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust bar -->
+    <section class="border-y border-line/60 bg-panel/40">
+      <div class="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-5 py-8 text-center sm:grid-cols-4">
+        <div><div class="text-2xl font-bold text-white">SwiftUI</div><div class="text-xs text-zinc-500">declaration tree, open</div></div>
+        <div><div class="text-2xl font-bold text-white">0 deps</div><div class="text-xs text-zinc-500">in your app binary</div></div>
+        <div><div class="text-2xl font-bold text-white">Browser</div><div class="text-xs text-zinc-500">macOS · Linux · Windows</div></div>
+        <div><div class="text-2xl font-bold text-white">iOS + macOS</div><div class="text-xs text-zinc-500">simulator & desktop</div></div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="mx-auto max-w-6xl px-5 py-20">
+      <h2 class="text-center text-3xl font-bold">Everything you need to inspect a running app</h2>
+      <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">🌳</div>
+          <h3 class="font-semibold">Unified hierarchy tree</h3>
+          <p class="mt-2 text-sm text-zinc-400">UIKit/AppKit views, SwiftUI nodes and CALayers in one tree, colour-coded by framework, with search, filtering and keyboard navigation.</p>
+        </div>
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">🟠</div>
+          <h3 class="font-semibold">Open SwiftUI inspection</h3>
+          <p class="mt-2 text-sm text-zinc-400">Recovers the real declaration tree — VStack, Text content, modifiers, <code>@State</code> — using only public reflection. The part LookInside keeps closed.</p>
+        </div>
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">🧊</div>
+          <h3 class="font-semibold">Exploded 3D canvas</h3>
+          <p class="mt-2 text-sm text-zinc-400">Wireframes + rendered snapshots, drag-to-orbit 3D with angle &amp; depth controls, zoom/pan, and click-to-select synced with the tree.</p>
+        </div>
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">✏️</div>
+          <h3 class="font-semibold">Live editing</h3>
+          <p class="mt-2 text-sm text-zinc-400">Change alpha, hidden, corner radius, colours, text and layer properties — on views and CALayers — and watch the app update.</p>
+        </div>
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">🌐</div>
+          <h3 class="font-semibold">Zero-install viewer</h3>
+          <p class="mt-2 text-sm text-zinc-400">The app hosts the viewer itself over loopback HTTP + WebSocket. Open a URL in any browser — nothing to install, easy to share.</p>
+        </div>
+        <div class="card rounded-2xl border border-line p-6">
+          <div class="mb-3 text-2xl">🔒</div>
+          <h3 class="font-semibold">Debug-only, no deps</h3>
+          <p class="mt-2 text-sm text-zinc-400">The embedded server is built on <code>Network.framework</code> + <code>CryptoKit</code> only — no third-party code enters your app, and it's excluded from Release.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3D showcase -->
+    <section class="border-y border-line/60 bg-panel/30">
+      <div class="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-2">
+        <div>
+          <h2 class="text-3xl font-bold">See the layers, literally.</h2>
+          <p class="mt-4 text-zinc-400">Toggle the exploded 3D view to fan the hierarchy out in depth. Drag to orbit, tune the X/Y angle and layer spacing, and the selected node stays in sync with the tree and inspector.</p>
+          <ul class="mt-6 space-y-2 text-sm text-zinc-300">
+            <li>✓ Drag to orbit · ⌥-drag to pan · ⌘-scroll to zoom</li>
+            <li>✓ Per-axis angle sliders + depth control</li>
+            <li>✓ Rendered snapshots layered in 3D</li>
+          </ul>
+        </div>
+        <img src="viewer-3d.png" alt="Exploded 3D view" class="shot w-full rounded-xl border border-line" />
+      </div>
+    </section>
+
+    <!-- Quick start -->
+    <section id="start" class="mx-auto max-w-4xl px-5 py-20">
+      <h2 class="text-center text-3xl font-bold">Quick start</h2>
+      <p class="mt-3 text-center text-zinc-400">Three steps to inspect your running app.</p>
+
+      <ol class="mt-12 space-y-8">
+        <li class="flex gap-5">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent font-bold text-white">1</span>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold">Add the package (Debug only)</h3>
+            <p class="mt-1 text-sm text-zinc-400">Add Treescope to your <code>Package.swift</code> dependencies:</p>
+            <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>.package(url: "https://github.com/everettjf/treescope", from: "0.1.0")
+// target dependency:
+.product(name: "TreescopeServer", package: "treescope")</code></pre>
+          </div>
+        </li>
+        <li class="flex gap-5">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent font-bold text-white">2</span>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold">Start the server early</h3>
+            <p class="mt-1 text-sm text-zinc-400">Guard it for Debug builds so it never ships in Release:</p>
+            <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>import TreescopeServer
+
+#if DEBUG
+Treescope.start()   // serves http://127.0.0.1:47761
+#endif</code></pre>
+          </div>
+        </li>
+        <li class="flex gap-5">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent font-bold text-white">3</span>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold">Open the viewer</h3>
+            <p class="mt-1 text-sm text-zinc-400">Run your app (Simulator or Mac), then open the URL in any browser:</p>
+            <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>open http://127.0.0.1:47761</code></pre>
+            <p class="mt-2 text-xs text-zinc-500">The iOS Simulator shares the host network stack, so loopback reaches the app.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="mt-12 rounded-2xl border border-line card p-6">
+        <h3 class="font-semibold">Try it in 30 seconds</h3>
+        <p class="mt-1 text-sm text-zinc-400">Clone and run the bundled demo:</p>
+        <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>git clone https://github.com/everettjf/treescope
+cd treescope
+swift run TreescopeDemo      # a sample app that embeds the server
+open http://127.0.0.1:47761  # inspect it</code></pre>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="border-t border-line/60 bg-panel/30">
+      <div class="mx-auto max-w-4xl px-5 py-20">
+        <h2 class="text-center text-3xl font-bold">How it works</h2>
+        <div class="mt-10 grid gap-6 sm:grid-cols-3">
+          <div class="text-center">
+            <div class="mb-2 text-3xl">📸</div>
+            <h3 class="font-semibold">Capture</h3>
+            <p class="mt-1 text-sm text-zinc-400">A debug-only engine walks UIWindow/NSWindow → views → layers, and reflects SwiftUI by opening <code>any View</code> with <code>Mirror</code>.</p>
+          </div>
+          <div class="text-center">
+            <div class="mb-2 text-3xl">🔌</div>
+            <h3 class="font-semibold">Serve</h3>
+            <p class="mt-1 text-sm text-zinc-400">A tiny loopback HTTP + WebSocket server streams the tree, snapshots and edits — built on Apple frameworks only.</p>
+          </div>
+          <div class="text-center">
+            <div class="mb-2 text-3xl">🖥️</div>
+            <h3 class="font-semibold">Inspect</h3>
+            <p class="mt-1 text-sm text-zinc-400">A React viewer renders the tree, 3D canvas and property inspector — in any browser, no install.</p>
+          </div>
+        </div>
+        <p class="mt-10 text-center text-sm text-zinc-500">
+          Read the deep dive in <a class="text-accent hover:underline" href="https://github.com/everettjf/treescope/blob/main/RESEARCH.md">RESEARCH.md</a>
+          · contribute via <a class="text-accent hover:underline" href="https://github.com/everettjf/treescope/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="mx-auto max-w-3xl px-5 py-20 text-center">
+      <h2 class="text-3xl font-bold">Open source. Built from scratch.</h2>
+      <p class="mt-3 text-zinc-400">MIT licensed. No code copied from Lookin or LookInside. Contributions welcome.</p>
+      <a href="https://github.com/everettjf/treescope" class="mt-7 inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-white hover:bg-accent/90">Star Treescope on GitHub</a>
+    </section>
+  </main>
+
+  <footer class="border-t border-line/60">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-8 text-sm text-zinc-500 sm:flex-row">
+      <span>🔭 Treescope — MIT License</span>
+      <span>Built with Swift + React. Not affiliated with Lookin or LookInside.</span>
+    </div>
+  </footer>
+</body>
+</html>
