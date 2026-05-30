@@ -60,6 +60,7 @@ The CLI auto-discovers the port by scanning `50067…50082`; override with `--po
 | `treescope find <query>` | Search nodes by name / class / label / text |
 | `treescope snapshot <nodeID>` | Save a rendered PNG of a node |
 | `treescope set <nodeID> <keyPath> <value>` | Live-edit an editable attribute |
+| `treescope mcp` | Run as an MCP server (stdio) for coding agents — see [below](#mcp-server-mode) |
 
 ### Global options
 
@@ -143,11 +144,60 @@ The CLI is designed to be driven by an LLM/agent:
 A typical agent loop: `status` → `tree --depth 3` → `find <thing>` →
 `inspect <id>` → optionally `snapshot <id>` or `set <id> …`.
 
+## MCP server mode
+
+`treescope mcp` runs the inspector as a [Model Context Protocol](https://modelcontextprotocol.io)
+server over stdio, so agents like Claude Code can call it as tools — no shell
+parsing required. It exposes:
+
+| Tool | Purpose |
+| --- | --- |
+| `treescope_status` | Device info + capabilities |
+| `treescope_get_tree` | Compact hierarchy (`maxDepth`, `visibleOnly`, `hideSystem`, `filter`, `includeSwiftUI`, `includeLayers`) |
+| `treescope_inspect_node` | All properties for one node |
+| `treescope_find_nodes` | Search by name / class / label / text |
+| `treescope_get_snapshot` | Rendered PNG returned as inline image content (multimodal) |
+| `treescope_set_attribute` | Live-edit an editable attribute |
+
+Outputs are token-efficient: `treescope_get_tree` defaults to `maxDepth: 4` and
+supports a `filter`, so an agent drills down with `find` / `inspect` rather than
+pulling a whole hierarchy at once.
+
+### Register with Claude Code
+
+```bash
+claude mcp add treescope -- node /absolute/path/to/treescope/CLI/dist/index.js mcp
+```
+
+Or in an MCP client config (`claude_desktop_config.json`, etc.):
+
+```json
+{
+  "mcpServers": {
+    "treescope": {
+      "command": "node",
+      "args": ["/absolute/path/to/treescope/CLI/dist/index.js", "mcp"]
+    }
+  }
+}
+```
+
+The server auto-discovers the app's port (50067…50082). To pin host/port, add
+them before `mcp`: `"args": [".../dist/index.js", "--port", "50067", "mcp"]`.
+
+## Testing
+
+```bash
+npm test     # builds, then runs node --test
+```
+
+The suite is self-contained: a mock Treescope server (`test/mock-server.mjs`)
+implements the wire protocol, and the tests exercise the formatters
+(`format.test.mjs`), every CLI command (`cli.test.mjs`), and every MCP tool via a
+real MCP client over stdio (`mcp.test.mjs`).
+
 ## Roadmap
 
-- **MCP server mode** (`treescope mcp`): expose the inspector as
-  Model Context Protocol tools so agents like Claude Code can call them directly,
-  with token-efficient, drill-down-oriented results. _(planned — phase 3)_
 - `--watch` mode subscribing to `hierarchyChanged` push events.
 - Bonjour-based discovery in addition to the loopback port scan.
 

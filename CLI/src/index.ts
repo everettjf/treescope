@@ -150,6 +150,17 @@ program
     } catch (e) { fail(e); }
   });
 
+// ── mcp ──────────────────────────────────────────────────────────────────────
+program
+  .command("mcp")
+  .description("Run as a Model Context Protocol (MCP) server over stdio, exposing the inspector as tools for coding agents")
+  .action(async () => {
+    try {
+      const { runMcpServer } = await import("./mcp.js");
+      await runMcpServer(connectionOptions());
+    } catch (e) { fail(e); }
+  });
+
 function parseValue(raw: string, type: string): AttributeValue {
   if (type === "string") return { t: "string", v: raw };
   if (type === "bool") return { t: "bool", v: raw === "true" || raw === "1" };

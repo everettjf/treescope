@@ -50,7 +50,7 @@ UIKit/AppKit and CALayers, and delivers the whole viewer as a zero-install web a
 | **`TreescopeProtocol`** | Pure-Foundation shared data model + a clean, discriminated JSON wire contract mirrored by the TypeScript client. |
 | **`TreescopeServer`** | The **debug-only runtime** you embed in your app. Captures UIKit/AppKit/SwiftUI/CALayer and serves the viewer + protocol over loopback HTTP + WebSocket. Bundles the built viewer as a resource. |
 | **`Web/`** | The browser viewer: React + TypeScript + Tailwind + shadcn/ui. Builds to a single self-contained HTML embedded into `TreescopeServer`. |
-| **`CLI/`** | A [command-line client](CLI/README.md) (Node/TypeScript) for inspecting the hierarchy from a shell, script, or **coding agent / LLM** — `treescope tree`, `inspect`, `find`, `snapshot`, `set`. |
+| **`CLI/`** | A [command-line client](CLI/README.md) (Node/TypeScript) for inspecting the hierarchy from a shell, script, or **coding agent / LLM** — `treescope tree`, `inspect`, `find`, `snapshot`, `set`, plus an **MCP server** (`treescope mcp`). |
 | **`TreescopeDemo`** | A sample SwiftUI app that embeds the server (also runs a self-test probe). |
 | **`Examples/TreescopeiOSDemo`** | A real iOS app for Simulator end-to-end testing (UIKit + SwiftUI + keyboard). |
 | **`Examples/TreescopeMacDemo`** | A real macOS app adopting the package via SwiftPM (AppKit + SwiftUI + CALayer). |
@@ -196,8 +196,13 @@ node dist/index.js inspect obj:42       # full properties for one node
 node dist/index.js --json tree          # machine-readable output for agents
 ```
 
-An MCP server mode (`treescope mcp`) so agents can call the inspector as tools is
-on the [roadmap](CLI/README.md#roadmap).
+For coding agents, `treescope mcp` runs an [MCP](https://modelcontextprotocol.io)
+server exposing the inspector as tools (see
+[MCP server mode](CLI/README.md#mcp-server-mode)):
+
+```bash
+claude mcp add treescope -- node /absolute/path/to/treescope/CLI/dist/index.js mcp
+```
 
 ---
 
