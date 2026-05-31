@@ -1,0 +1,45 @@
+{
+  "name": "treescope-cli",
+  "version": "0.1.0",
+  "description": "Command-line client for the Treescope runtime view inspector — built for shells, scripts, and coding agents (LLMs) to inspect a running app's UI hierarchy.",
+  "type": "module",
+  "bin": {
+    "treescope": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "treescope",
+    "ios",
+    "uikit",
+    "appkit",
+    "swiftui",
+    "view-inspector",
+    "debugging",
+    "cli",
+    "mcp",
+    "llm",
+    "coding-agent"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.6.0"
+  }
+}
