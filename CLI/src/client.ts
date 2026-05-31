@@ -121,6 +121,9 @@ export class Client {
   /** Fetch a node's rendered snapshot PNG over HTTP. */
   async fetchSnapshot(nodeID: string, scale = 2): Promise<Buffer> {
     const res = await fetch(this.snapshotURL(nodeID, scale));
+    if (res.status === 404) {
+      throw new Error(`no rendered snapshot available for node '${nodeID}' (it may not be a renderable view/layer — windows and value-typed SwiftUI nodes have none)`);
+    }
     if (!res.ok) throw new Error(`snapshot request failed (HTTP ${res.status})`);
     return Buffer.from(await res.arrayBuffer());
   }

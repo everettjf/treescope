@@ -48,6 +48,16 @@ final class AttributeTests: XCTestCase {
         XCTAssertEqual(value, back)
     }
 
+    func testCoerceIntegerToNumber() {
+        // A whole number sent for a number-typed property arrives as .integer.
+        XCTAssertEqual(AttributeValue.integer(12).coercingIntegerToNumber, .number(12))
+        XCTAssertEqual(AttributeValue.integer(-3).coercingIntegerToNumber, .number(-3))
+        // Other cases pass through unchanged.
+        XCTAssertEqual(AttributeValue.number(3.5).coercingIntegerToNumber, .number(3.5))
+        XCTAssertEqual(AttributeValue.bool(true).coercingIntegerToNumber, .bool(true))
+        XCTAssertEqual(AttributeValue.string("x").coercingIntegerToNumber, .string("x"))
+    }
+
     func testSectionBuildDropsEmpty() {
         let sections = [AttributeSection].build([
             ("A", [Attribute(title: "x", value: .bool(true))]),

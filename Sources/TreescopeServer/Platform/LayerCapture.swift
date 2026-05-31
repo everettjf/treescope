@@ -110,6 +110,7 @@ extension CaptureEngine {
     // MARK: Live edit / snapshot / highlight on layers
 
     func setLayerAttribute(on layer: CALayer, keyPath: String, value: AttributeValue) -> (Bool, String?) {
+        let value = value.coercingIntegerToNumber
         switch (keyPath, value) {
         case ("opacity", .number(let n)): layer.opacity = Float(n); return (true, nil)
         case ("hidden", .bool(let b)): layer.isHidden = b; return (true, nil)
@@ -120,7 +121,7 @@ extension CaptureEngine {
                                             blue: CGFloat(c.blue), alpha: CGFloat(c.alpha))
             return (true, nil)
         default:
-            return (false, "unsupported layer keyPath \(keyPath)")
+            return (false, "cannot set layer '\(keyPath)' (unsupported key path or value type \(value.displayString))")
         }
     }
 

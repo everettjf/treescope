@@ -34,6 +34,15 @@ test("renderTree --visible-only drops hidden and zero-size nodes", () => {
   assert.match(out, /UILabel/);
 });
 
+test("renderTree connectors reflect rendered siblings, not raw children", () => {
+  // RootView has 3 children but only UILabel is visible; it must be the last
+  // child (└─), with no dangling vertical connector before it.
+  const out = renderTree(roots, { maxDepth: 0, visibleOnly: true, hideSystem: false });
+  assert.match(out, /└─ UILabel/);
+  assert.doesNotMatch(out, /├─ UILabel/);
+  assert.doesNotMatch(out, /│.*UILabel/);
+});
+
 test("renderTree --filter keeps matches and their ancestors", () => {
   const out = renderTree(roots, { maxDepth: 0, visibleOnly: false, hideSystem: false, match: "login" });
   assert.match(out, /LoginButton/);

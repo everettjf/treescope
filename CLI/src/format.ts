@@ -48,11 +48,17 @@ export function renderTree(roots: ViewNode[], filter: TreeFilter): string {
   const lines: string[] = [];
   const needle = filter.match?.toLowerCase();
 
-  const walk = (node: ViewNode, depth: number, prefix: string, isLast: boolean) => {
-    if (filter.visibleOnly && !isVisible(node)) return;
-    if (filter.hideSystem && (node.flags & Flag.systemView) !== 0) return;
-    if (needle && !subtreeMatches(node, needle)) return;
+  // Whether a node survives the active filters (and so contributes a line).
+  const shouldRender = (node: ViewNode): boolean => {
+    if (filter.visibleOnly && !isVisible(node)) return false;
+    if (filter.hideSystem && (node.flags & Flag.systemView) !== 0) return false;
+    if (needle && !subtreeMatches(node, needle)) return false;
+    return true;
+  };
 
+  // `node` is always renderable here (callers pre-filter), so connector glyphs
+  // (├─ vs └─) reflect the *rendered* siblings, not the raw children.
+  const walk = (node: ViewNode, depth: number, prefix: string, isLast: boolean) => {
     const branch = depth === 0 ? "" : (isLast ? "└─ " : "├─ ");
     const flags = flagStr(node);
     const label = node.label ? `  "${truncate(node.label, 40)}"` : "";
@@ -60,23 +66,21 @@ export function renderTree(roots: ViewNode[], filter: TreeFilter): string {
     const meta = [`#${node.id}`, rectStr(node.frame), flags].filter(Boolean).join("  ");
     lines.push(`${prefix}${branch}${node.displayName}${label}${cls}  ·  ${meta}`);
 
+    const childPrefix = prefix + (depth === 0 ? "" : (isLast ? "   " : "│  "));
+    const kids = node.children.filter(shouldRender);
+
     if (filter.maxDepth > 0 && depth + 1 >= filter.maxDepth) {
-      const hidden = node.children.length;
-      if (hidden > 0) {
-        const childPrefix = prefix + (depth === 0 ? "" : (isLast ? "   " : "│  "));
-        lines.push(`${childPrefix}└─ … ${hidden} child${hidden === 1 ? "" : "ren"} (depth limit)`);
+      if (kids.length > 0) {
+        lines.push(`${childPrefix}└─ … ${kids.length} child${kids.length === 1 ? "" : "ren"} (depth limit)`);
       }
       return;
     }
 
-    const kids = node.children;
-    kids.forEach((child, i) => {
-      const childPrefix = prefix + (depth === 0 ? "" : (isLast ? "   " : "│  "));
-      walk(child, depth + 1, childPrefix, i === kids.length - 1);
-    });
+    kids.forEach((child, i) => walk(child, depth + 1, childPrefix, i === kids.length - 1));
   };
 
-  roots.forEach((root, i) => walk(root, 0, "", i === roots.length - 1));
+  const renderRoots = roots.filter(shouldRender);
+  renderRoots.forEach((root, i) => walk(root, 0, "", i === renderRoots.length - 1));
   return lines.join("\n");
 }
 

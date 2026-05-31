@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Fix: live-editing numeric properties with whole numbers.** Setting a `Double`-backed property
+  (`alpha`/`alphaValue`, `opacity`, `cornerRadius`, `borderWidth`) to a whole number such as `12`
+  was rejected, because the value arrived as `.integer` while the handlers matched only `.number`.
+  Integer values are now coerced to numbers across the UIKit/AppKit/CALayer live-edit handlers, and
+  the rejection message no longer misreports a supported key path as "unsupported"
+  ([#4](https://github.com/everettjf/treescope/issues/4)).
+- **CLI: clearer snapshot error** when a node has no rendered snapshot (e.g. a window), instead of a
+  bare `HTTP 404`. Tree connectors (`├─`/`└─`) now reflect the *rendered* siblings under
+  `--filter` / `--visible-only` rather than the raw children.
 - **Command-line client (`CLI/`).** A Node/TypeScript `treescope` CLI that speaks the same
   loopback protocol as the browser viewer, for inspecting a running app from a shell or a script:
   `status`, `tree` (with `--depth`/`--visible-only`/`--filter`), `inspect`, `find`, `snapshot`, and

@@ -2,7 +2,7 @@ import Foundation
 
 public enum ProtocolConstants {
     /// Human-readable release version.
-    public static let version = "0.1.0"
+    public static let version = "0.1.1"
     /// Wire protocol version; bump on incompatible message changes.
     public static let protocolVersion = 1
 

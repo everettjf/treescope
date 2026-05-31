@@ -235,6 +235,7 @@ extension CaptureEngine {
 
     func setAttribute(on object: AnyObject, keyPath: String, value: AttributeValue) -> (Bool, String?) {
         guard let view = object as? NSView else { return (false, "not an NSView") }
+        let value = value.coercingIntegerToNumber
         switch (keyPath, value) {
         case ("alphaValue", .number(let n)):
             view.alphaValue = CGFloat(n); return (true, nil)
@@ -246,7 +247,7 @@ extension CaptureEngine {
             if let field = view as? NSTextField { field.stringValue = s; return (true, nil) }
             return (false, "view has no stringValue")
         default:
-            return (false, "unsupported keyPath \(keyPath)")
+            return (false, "cannot set '\(keyPath)' here (unsupported key path or value type \(value.displayString))")
         }
     }
 

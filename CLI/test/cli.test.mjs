@@ -106,6 +106,12 @@ test("snapshot saves a PNG file", async () => {
   await rm(out, { force: true });
 });
 
+test("snapshot of a non-renderable node gives a clear message", async () => {
+  const { code, stderr } = await run(["snapshot", "obj:1", "-o", join(HERE, "_nope.png")]);
+  assert.equal(code, 1);
+  assert.match(stderr, /no rendered snapshot available/);
+});
+
 test("set succeeds on a known node", async () => {
   const { code, stdout } = await run(["set", "obj:4", "alpha", "0.5"]);
   assert.equal(code, 0);

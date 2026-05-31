@@ -8,7 +8,7 @@ import {
 } from "./format.js";
 import { LOOPBACK_HOST, capabilityNames, AttributeValue, DEFAULT_PORT } from "./protocol.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const program = new Command();
 program

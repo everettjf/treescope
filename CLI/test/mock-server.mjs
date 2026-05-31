@@ -77,8 +77,15 @@ export function startMockServer({ port = 0 } = {}) {
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
     } else if (url.pathname.startsWith("/snapshot/")) {
-      res.writeHead(200, { "content-type": "image/png" });
-      res.end(PNG_1x1);
+      // Only nodes with a snapshot (obj:3, obj:4) render; others 404, like the real server.
+      const id = decodeURIComponent(url.pathname.slice("/snapshot/".length));
+      if (id === "obj:3" || id === "obj:4") {
+        res.writeHead(200, { "content-type": "image/png" });
+        res.end(PNG_1x1);
+      } else {
+        res.writeHead(404, { "content-type": "text/plain" });
+        res.end("not found");
+      }
     } else {
       res.writeHead(404);
       res.end("not found");

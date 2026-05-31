@@ -254,6 +254,7 @@ extension CaptureEngine {
 
     func setAttribute(on object: AnyObject, keyPath: String, value: AttributeValue) -> (Bool, String?) {
         guard let view = object as? UIView else { return (false, "not a UIView") }
+        let value = value.coercingIntegerToNumber
         switch (keyPath, value) {
         case ("alpha", .number(let n)):
             view.alpha = CGFloat(n); return (true, nil)
@@ -269,7 +270,7 @@ extension CaptureEngine {
             if let tf = view as? UITextField { tf.text = s; return (true, nil) }
             return (false, "view has no text")
         default:
-            return (false, "unsupported keyPath \(keyPath)")
+            return (false, "cannot set '\(keyPath)' here (unsupported key path or value type \(value.displayString))")
         }
     }
 

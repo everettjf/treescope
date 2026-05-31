@@ -116,5 +116,30 @@ final class AppKitCaptureTests: XCTestCase {
         XCTAssertTrue(ok)
         XCTAssertEqual(content.alphaValue, 0.3, accuracy: 0.001)
     }
+
+    @MainActor
+    func testLiveEditCoercesWholeNumberInteger() throws {
+        // A whole number arrives as `.integer`; numeric properties must still accept it.
+        let content = NSView(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
+        let window = makeWindow(content)
+        let engine = CaptureEngine()
+        let node = try XCTUnwrap(engine.captureWindow(window, options: .default, path: "win0"))
+        let contentNode = try XCTUnwrap(node.children.first)
+
+        // View property (cornerRadius is backed by the layer).
+        let (ok, msg) = engine.applyAttribute(nodeID: contentNode.id, keyPath: "cornerRadius", value: .integer(12))
+        XCTAssertTrue(ok, "integer cornerRadius should be accepted; got \(String(describing: msg))")
+        let radius = try XCTUnwrap(content.layer?.cornerRadius)
+        XCTAssertEqual(radius, 12, accuracy: 0.001)
+
+        let (ok2, _) = engine.applyAttribute(nodeID: contentNode.id, keyPath: "alphaValue", value: .integer(1))
+        XCTAssertTrue(ok2)
+        XCTAssertEqual(content.alphaValue, 1.0, accuracy: 0.001)
+
+        // A genuinely unknown key path still fails, with a clearer message.
+        let (bad, badMsg) = engine.applyAttribute(nodeID: contentNode.id, keyPath: "bogus", value: .integer(1))
+        XCTAssertFalse(bad)
+        XCTAssertEqual(badMsg, "cannot set 'bogus' here (unsupported key path or value type 1.0)")
+    }
 }
 #endif

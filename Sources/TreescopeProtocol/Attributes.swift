@@ -43,6 +43,15 @@ public indirect enum AttributeValue: Hashable, Sendable {
         case .nested(let attrs): return "{ \(attrs.count) }"
         }
     }
+
+    /// Numeric live-edit handlers expect `.number` (a `Double`-backed property
+    /// like `alpha`, `opacity`, `cornerRadius`, `borderWidth`). A whole-number
+    /// value sent by a client legitimately arrives as `.integer`, so coerce it
+    /// here — this makes `cornerRadius 12` behave the same as `cornerRadius 12.0`.
+    public var coercingIntegerToNumber: AttributeValue {
+        if case .integer(let i) = self { return .number(Double(i)) }
+        return self
+    }
 }
 
 extension AttributeValue: Codable {

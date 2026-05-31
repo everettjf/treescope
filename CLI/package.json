@@ -1,6 +1,6 @@
 {
   "name": "treescope-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line client for the Treescope runtime view inspector — built for shells, scripts, and coding agents (LLMs) to inspect a running app's UI hierarchy.",
   "type": "module",
   "bin": {
