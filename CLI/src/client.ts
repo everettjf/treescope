@@ -27,7 +27,7 @@ export class Client {
     readonly host: string,
     readonly port: number,
     private readonly clientName = "Treescope CLI",
-    private readonly clientVersion = "0.1.0",
+    private readonly clientVersion = "0.2.0",
   ) {}
 
   get httpBase(): string {
