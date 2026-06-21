@@ -77,9 +77,11 @@ export function startMockServer({ port = 0 } = {}) {
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
     } else if (url.pathname.startsWith("/snapshot/")) {
-      // Only nodes with a snapshot (obj:3, obj:4) render; others 404, like the real server.
+      // Renderable views (the full-screen RootView obj:2, and obj:3/obj:4) return a
+      // PNG; others — notably the window obj:1 — 404, like the real server. A
+      // `screenshot` capture therefore falls back from the window to its content view.
       const id = decodeURIComponent(url.pathname.slice("/snapshot/".length));
-      if (id === "obj:3" || id === "obj:4") {
+      if (id === "obj:2" || id === "obj:3" || id === "obj:4") {
         res.writeHead(200, { "content-type": "image/png" });
         res.end(PNG_1x1);
       } else {

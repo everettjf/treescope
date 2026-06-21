@@ -2,6 +2,7 @@
 import { Command, Option } from "commander";
 import { writeFile } from "node:fs/promises";
 import { connect, fetchSnapshot, ConnectionOptions } from "./discovery.js";
+import { captureScreen } from "./screenshot.js";
 import {
   renderTree, renderNode, renderDevice, findNodes, findNode,
   snapshotSummary, TreeFilter,
@@ -129,6 +130,25 @@ program
         if (isJSON()) console.log(JSON.stringify({ output: opts.output, bytes: png.length }));
         else console.log(`Saved ${png.length} bytes to ${opts.output}`);
       } finally { client.disconnect(); }
+    } catch (e) { fail(e); }
+  });
+
+// ── screenshot ────────────────────────────────────────────────────────────────
+program
+  .command("screenshot")
+  .alias("shot")
+  .description("Capture a PNG of the whole current screen (auto-selects the visible window)")
+  .option("-s, --scale <n>", "render scale", (v) => parseFloat(v), 2)
+  .option("-o, --output <file>", "output file path", "screenshot.png")
+  .action(async (opts) => {
+    try {
+      const { png, nodeID, device } = await captureScreen(connectionOptions(), opts.scale);
+      await writeFile(opts.output, png);
+      if (isJSON()) {
+        console.log(JSON.stringify({ output: opts.output, bytes: png.length, nodeID }));
+      } else {
+        console.log(`Saved ${device.appName} screen (${png.length} bytes, from #${nodeID}) to ${opts.output}`);
+      }
     } catch (e) { fail(e); }
   });
 

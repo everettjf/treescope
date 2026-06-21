@@ -55,10 +55,11 @@ The CLI auto-discovers the port by scanning `50067…50082`; override with `--po
 | Command | Description |
 | --- | --- |
 | `treescope status` | Connect and print device info + capabilities |
+| `treescope screenshot` | Save a PNG of the **whole current screen** (auto-selects the window) |
 | `treescope tree` | Print the view hierarchy as a compact tree |
 | `treescope inspect <nodeID>` | Show all properties for one node |
 | `treescope find <query>` | Search nodes by name / class / label / text |
-| `treescope snapshot <nodeID>` | Save a rendered PNG of a node |
+| `treescope snapshot <nodeID>` | Save a rendered PNG of one node |
 | `treescope set <nodeID> <keyPath> <value>` | Live-edit an editable attribute |
 | `treescope mcp` | Run as an MCP server (stdio) for coding agents — see [below](#mcp-server-mode) |
 
@@ -70,6 +71,19 @@ The CLI auto-discovers the port by scanning `50067…50082`; override with `--po
 --timeout <ms>    network timeout (default 8000)
 --json            emit machine-readable JSON instead of formatted text
 ```
+
+### `screenshot`
+
+```bash
+treescope screenshot                       # -> screenshot.png (whole screen)
+treescope screenshot -o screen.png --scale 2
+treescope shot                             # alias
+```
+
+Captures the entire current screen in one call — no node id needed. It picks the visible
+window automatically and falls back to its content view, so it works on iOS (where a
+`UIWindow` renders) and macOS (where the `NSWindow` root does not). This is the quickest way
+for a coding agent to **see** the UI; re-run it after a `set` to confirm the change visually.
 
 ### `tree`
 
@@ -141,8 +155,13 @@ The CLI is designed to be driven by an LLM/agent:
   drilling in with `inspect`.
 - `snapshot` produces a PNG a multimodal model can look at.
 
-A typical agent loop: `status` → `tree --depth 3` → `find <thing>` →
-`inspect <id>` → optionally `snapshot <id>` or `set <id> …`.
+A typical agent loop: `status` → `screenshot` (look at the screen) →
+`tree --depth 3` → `find <thing>` → `inspect <id>` → optionally `set <id> …`
+→ `screenshot` again to confirm.
+
+There's also a ready-made **Claude Code skill** at
+[`.claude/skills/treescope/`](../.claude/skills/treescope/SKILL.md) that encodes this loop —
+copy it into your own project's `.claude/skills/` to give agents UI sight there too.
 
 ## MCP server mode
 
@@ -153,6 +172,7 @@ parsing required. It exposes:
 | Tool | Purpose |
 | --- | --- |
 | `treescope_status` | Device info + capabilities |
+| `treescope_screenshot` | Whole-screen PNG returned inline (multimodal) — *see the UI in one call* |
 | `treescope_get_tree` | Compact hierarchy (`maxDepth`, `visibleOnly`, `hideSystem`, `filter`, `includeSwiftUI`, `includeLayers`) |
 | `treescope_inspect_node` | All properties for one node |
 | `treescope_find_nodes` | Search by name / class / label / text |

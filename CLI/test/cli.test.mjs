@@ -112,6 +112,28 @@ test("snapshot of a non-renderable node gives a clear message", async () => {
   assert.match(stderr, /no rendered snapshot available/);
 });
 
+test("screenshot captures the screen, falling back from the window to its content view", async () => {
+  const out = join(HERE, "_tmp_screenshot.png");
+  await rm(out, { force: true });
+  const { code, stdout } = await run(["screenshot", "-o", out]);
+  assert.equal(code, 0);
+  // The window obj:1 has no snapshot, so the capture falls back to RootView obj:2.
+  assert.match(stdout, /from #obj:2/);
+  const png = await readFile(out);
+  assert.deepEqual([...png.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]); // PNG signature
+  await rm(out, { force: true });
+});
+
+test("screenshot --json reports the rendered node id", async () => {
+  const out = join(HERE, "_tmp_screenshot2.png");
+  await rm(out, { force: true });
+  const { stdout } = await run(["--json", "screenshot", "-o", out]);
+  const res = JSON.parse(stdout);
+  assert.equal(res.nodeID, "obj:2");
+  assert.ok(res.bytes > 0);
+  await rm(out, { force: true });
+});
+
 test("set succeeds on a known node", async () => {
   const { code, stdout } = await run(["set", "obj:4", "alpha", "0.5"]);
   assert.equal(code, 0);

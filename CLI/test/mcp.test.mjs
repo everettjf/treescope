@@ -38,6 +38,7 @@ test("initialize + tools/list exposes all tools with schemas", async () => {
     "treescope_get_snapshot",
     "treescope_get_tree",
     "treescope_inspect_node",
+    "treescope_screenshot",
     "treescope_set_attribute",
     "treescope_status",
   ]);
@@ -94,6 +95,18 @@ test("treescope_get_snapshot returns inline PNG image content", async () => {
   assert.equal(image.mimeType, "image/png");
   const bytes = Buffer.from(image.data, "base64");
   assert.deepEqual([...bytes.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
+});
+
+test("treescope_screenshot returns an inline PNG of the whole screen", async () => {
+  const r = await client.callTool({ name: "treescope_screenshot", arguments: {} });
+  assert.ok(!r.isError);
+  const image = r.content.find((c) => c.type === "image");
+  assert.ok(image, "expected an image content block");
+  assert.equal(image.mimeType, "image/png");
+  const bytes = Buffer.from(image.data, "base64");
+  assert.deepEqual([...bytes.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]);
+  // Falls back from the non-renderable window to its content view.
+  assert.match(textOf(r), /from #obj:2/);
 });
 
 test("treescope_set_attribute succeeds on known and errors on unknown node", async () => {

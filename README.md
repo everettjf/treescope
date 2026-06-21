@@ -50,7 +50,7 @@ UIKit/AppKit and CALayers, and delivers the whole viewer as a zero-install web a
 | **`TreescopeProtocol`** | Pure-Foundation shared data model + a clean, discriminated JSON wire contract mirrored by the TypeScript client. |
 | **`TreescopeServer`** | The **debug-only runtime** you embed in your app. Captures UIKit/AppKit/SwiftUI/CALayer and serves the viewer + protocol over loopback HTTP + WebSocket. Bundles the built viewer as a resource. |
 | **`Web/`** | The browser viewer: React + TypeScript + Tailwind + shadcn/ui. Builds to a single self-contained HTML embedded into `TreescopeServer`. |
-| **`CLI/`** | A [command-line client](CLI/README.md) (Node/TypeScript) for inspecting the hierarchy from a shell, script, or **coding agent / LLM** — `treescope tree`, `inspect`, `find`, `snapshot`, `set`, plus an **MCP server** (`treescope mcp`). |
+| **`CLI/`** | A [command-line client](CLI/README.md) (Node/TypeScript) for inspecting the hierarchy from a shell, script, or **coding agent / LLM** — `treescope screenshot`, `tree`, `inspect`, `find`, `snapshot`, `set`, plus an **MCP server** (`treescope mcp`). |
 | **`TreescopeDemo`** | A sample SwiftUI app that embeds the server (also runs a self-test probe). |
 | **`Examples/TreescopeiOSDemo`** | A real iOS app for Simulator end-to-end testing (UIKit + SwiftUI + keyboard). |
 | **`Examples/TreescopeMacDemo`** | A real macOS app adopting the package via SwiftPM (AppKit + SwiftUI + CALayer). |
@@ -190,6 +190,7 @@ Prefer the terminal — or want a coding agent / LLM to "see" the UI? The
 ```bash
 cd CLI && npm install && npm run build
 node dist/index.js status               # device info + capabilities
+node dist/index.js screenshot           # PNG of the whole screen — let the agent SEE the UI
 node dist/index.js tree --depth 3       # compact, token-friendly hierarchy
 node dist/index.js find LoginButton     # locate a node by name/label/text
 node dist/index.js inspect obj:42       # full properties for one node
@@ -197,12 +198,17 @@ node dist/index.js --json tree          # machine-readable output for agents
 ```
 
 For coding agents, `treescope mcp` runs an [MCP](https://modelcontextprotocol.io)
-server exposing the inspector as tools (see
+server exposing the inspector as tools — including `treescope_screenshot`, which returns the
+whole screen as an inline image so a multimodal agent can look at it (see
 [MCP server mode](CLI/README.md#mcp-server-mode)):
 
 ```bash
 claude mcp add treescope -- node /absolute/path/to/treescope/CLI/dist/index.js mcp
 ```
+
+There's also a **Claude Code skill** at [`.claude/skills/treescope/`](.claude/skills/treescope/SKILL.md)
+that teaches an agent the whole inspect loop (`status → screenshot → tree/find → inspect → set`);
+copy it into your own project's `.claude/skills/` to give agents UI sight there.
 
 ---
 

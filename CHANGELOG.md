@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **`treescope screenshot` (alias `shot`).** Capture a PNG of the *whole current screen* in one
+  command — it auto-selects the visible window and falls back to its content view (so it works on
+  iOS where a `UIWindow` renders directly and on macOS where the `NSWindow` root does not). This is
+  the fastest way for a coding agent to **see** the UI without first walking the tree for a node id.
+- **MCP `treescope_screenshot` tool.** The same whole-screen capture as an inline PNG, so a
+  multimodal agent can look at the screen directly; the server instructions now steer agents to call
+  it first. Added to the MCP test suite.
+- **Treescope Skill (`.claude/skills/treescope/`).** A Claude Code skill that teaches an agent the
+  inspect loop (`status → screenshot → tree/find → inspect → set → re-screenshot`), how to resolve
+  the `treescope` command (`npx treescope-cli` / local build), and how to diagnose "app not running
+  / wrong port". Copy it into your own project's `.claude/skills/` to give agents UI sight there too.
+
 ## 0.1.1 — 2026-05-30
 
 - **Fix: live-editing numeric properties with whole numbers.** Setting a `Double`-backed property

@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { connect, fetchSnapshot, ConnectionOptions } from "./discovery.js";
+import { captureScreen } from "./screenshot.js";
 import {
   renderTree, renderNode, renderDevice, findNodes, findNode,
   snapshotSummary, TreeFilter,
@@ -49,11 +50,14 @@ export function buildServer(conn: ConnectionOptions): McpServer {
     {
       instructions:
         "Inspect a running app's UIKit/AppKit/SwiftUI view hierarchy via Treescope. " +
-        "Typical flow: treescope_status to confirm connectivity, treescope_get_tree " +
-        "(use a small maxDepth or a filter to stay token-efficient) to see structure, " +
+        "To SEE the UI, call treescope_screenshot first — it returns a PNG of the whole " +
+        "current screen so you can look at it directly. Typical flow: treescope_status to " +
+        "confirm connectivity, treescope_screenshot to view the screen, treescope_get_tree " +
+        "(use a small maxDepth or a filter to stay token-efficient) for structure, " +
         "treescope_find_nodes to locate something by name/label/text, then " +
         "treescope_inspect_node for one node's full properties. treescope_get_snapshot " +
-        "returns a rendered PNG; treescope_set_attribute live-edits an editable property.",
+        "renders one node; treescope_set_attribute live-edits an editable property (re-run " +
+        "treescope_screenshot afterwards to confirm the change).",
     },
   );
 
@@ -75,6 +79,31 @@ export function buildServer(conn: ConnectionOptions): McpServer {
           `at ${client.host}:${client.port}\n\n${renderDevice(info.device)}\n\n` +
           `Capabilities: ${capabilityNames(info.capabilities).join(", ") || "none"}`;
         return textResult(text);
+      } catch (e) { return errorResult(e); }
+    },
+  );
+
+  server.registerTool(
+    "treescope_screenshot",
+    {
+      title: "Treescope: screenshot the whole screen (PNG)",
+      description:
+        "Render the entire current screen to a PNG and return it inline, so you can SEE the " +
+        "app's UI directly. Auto-selects the visible window — no node id needed. Use this first " +
+        "to look at the screen, then treescope_get_tree / treescope_find_nodes to drill in.",
+      inputSchema: {
+        scale: z.number().min(0.5).max(4).default(2).describe("Render scale. Default 2."),
+      },
+    },
+    async (args): Promise<ToolResult> => {
+      try {
+        const { png, nodeID, device } = await captureScreen(conn, args.scale);
+        return {
+          content: [
+            { type: "text", text: `${device.appName} screen (${png.length} bytes, scale ${args.scale}, rendered from #${nodeID}).` },
+            { type: "image", data: png.toString("base64"), mimeType: "image/png" },
+          ],
+        };
       } catch (e) { return errorResult(e); }
     },
   );
