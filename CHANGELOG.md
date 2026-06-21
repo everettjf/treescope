@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-06-21
+
 - **`treescope screenshot` (alias `shot`).** Capture a PNG of the *whole current screen* in one
   command — it auto-selects the visible window and falls back to its content view (so it works on
   iOS where a `UIWindow` renders directly and on macOS where the `NSWindow` root does not). This is
@@ -13,6 +15,9 @@
   inspect loop (`status → screenshot → tree/find → inspect → set → re-screenshot`), how to resolve
   the `treescope` command (`npx treescope-cli` / local build), and how to diagnose "app not running
   / wrong port". Copy it into your own project's `.claude/skills/` to give agents UI sight there too.
+- **CLI published to npm.** Completed the `package.json` publish metadata (`repository` with the
+  `CLI` subdirectory, `homepage`, `bugs`, `author`) and ship `LICENSE` in the package, so the CLI
+  and MCP server install with `npx -y treescope-cli` / `npm i -g treescope-cli` — no local build.
 
 ## 0.1.1 — 2026-05-30
 

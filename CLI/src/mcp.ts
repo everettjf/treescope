@@ -9,7 +9,7 @@ import {
 } from "./format.js";
 import { capabilityNames, AttributeValue } from "./protocol.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.2.0";
 
 type ToolResult = {
   content: Array<
