@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "treescope-cli"
+version = "0.2.0"
+description = "Command-line client and MCP server for the Treescope runtime view inspector — let a shell, script, or coding agent (LLM) inspect a running iOS/macOS/tvOS app's UIKit / AppKit / SwiftUI view hierarchy."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "everettjf" }]
+keywords = [
+    "treescope", "ios", "macos", "uikit", "appkit", "swiftui",
+    "view-inspector", "debugging", "cli", "mcp", "llm", "coding-agent",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Debuggers",
+]
+dependencies = [
+    "websockets>=13.0",
+    "mcp>=1.2.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "aiohttp>=3.9",
+]
+
+[project.scripts]
+treescope = "treescope_cli.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/everettjf/treescope/tree/main/python#readme"
+Repository = "https://github.com/everettjf/treescope"
+Issues = "https://github.com/everettjf/treescope/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/treescope_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

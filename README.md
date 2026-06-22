@@ -51,6 +51,7 @@ UIKit/AppKit and CALayers, and delivers the whole viewer as a zero-install web a
 | **`TreescopeServer`** | The **debug-only runtime** you embed in your app. Captures UIKit/AppKit/SwiftUI/CALayer and serves the viewer + protocol over loopback HTTP + WebSocket. Bundles the built viewer as a resource. |
 | **`Web/`** | The browser viewer: React + TypeScript + Tailwind + shadcn/ui. Builds to a single self-contained HTML embedded into `TreescopeServer`. |
 | **`CLI/`** | A [command-line client](CLI/README.md) (Node/TypeScript) for inspecting the hierarchy from a shell, script, or **coding agent / LLM** — `treescope screenshot`, `tree`, `inspect`, `find`, `snapshot`, `set`, plus an **MCP server** (`treescope mcp`). |
+| **`python/`** | A [Python client](python/README.md) (`pip install treescope-cli`) — the same `treescope` commands and MCP server as the Node CLI, for Python shells, scripts, and agents. |
 | **`TreescopeDemo`** | A sample SwiftUI app that embeds the server (also runs a self-test probe). |
 | **`Examples/TreescopeiOSDemo`** | A real iOS app for Simulator end-to-end testing (UIKit + SwiftUI + keyboard). |
 | **`Examples/TreescopeMacDemo`** | A real macOS app adopting the package via SwiftPM (AppKit + SwiftUI + CALayer). |
@@ -209,6 +210,9 @@ claude mcp add treescope -- node /absolute/path/to/treescope/CLI/dist/index.js m
 There's also a **Claude Code skill** at [`.claude/skills/treescope/`](.claude/skills/treescope/SKILL.md)
 that teaches an agent the whole inspect loop (`status → screenshot → tree/find → inspect → set`);
 copy it into your own project's `.claude/skills/` to give agents UI sight there.
+
+Prefer Python? `pip install treescope-cli` gives the same `treescope` commands and MCP server (see
+[`python/`](python/README.md)) — register it with `claude mcp add treescope -- treescope mcp`.
 
 ---
 

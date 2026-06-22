@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Python client (`python/`, `pip install treescope-cli`).** A full Python port of the CLI and MCP
+  server speaking the same loopback protocol — `treescope status / screenshot / tree / inspect /
+  find / snapshot / set` and `treescope mcp` (7 tools, inline-PNG screenshot). Async `websockets`
+  client; the MCP server uses the official `mcp` SDK. Self-contained test suite (aiohttp mock
+  server) covering the formatters, every CLI command, and every MCP tool over a real stdio MCP
+  client — 29 tests. Registers with `claude mcp add treescope -- treescope mcp`.
+
 ## 0.2.0 — 2026-06-21
 
 - **`treescope screenshot` (alias `shot`).** Capture a PNG of the *whole current screen* in one
@@ -15,9 +22,10 @@
   inspect loop (`status → screenshot → tree/find → inspect → set → re-screenshot`), how to resolve
   the `treescope` command (`npx treescope-cli` / local build), and how to diagnose "app not running
   / wrong port". Copy it into your own project's `.claude/skills/` to give agents UI sight there too.
-- **CLI published to npm.** Completed the `package.json` publish metadata (`repository` with the
-  `CLI` subdirectory, `homepage`, `bugs`, `author`) and ship `LICENSE` in the package, so the CLI
-  and MCP server install with `npx -y treescope-cli` / `npm i -g treescope-cli` — no local build.
+- **CLI packaged for npm.** Completed the `package.json` publish metadata (`repository` with the
+  `CLI` subdirectory, `homepage`, `bugs`, `author`) and ship `LICENSE` in the package, so once
+  published the CLI and MCP server install with `npx -y treescope-cli` / `npm i -g treescope-cli` —
+  no local build.
 
 ## 0.1.1 — 2026-05-30
 
