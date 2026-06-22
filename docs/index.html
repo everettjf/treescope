@@ -40,6 +40,7 @@
       </a>
       <nav class="flex items-center gap-5 text-sm text-zinc-300">
         <a href="#features" class="hover:text-white">Features</a>
+        <a href="#agents" class="hover:text-white">Agents</a>
         <a href="#start" class="hover:text-white">Quick start</a>
         <a href="#how" class="hover:text-white">How it works</a>
         <a href="https://github.com/everettjf/treescope" class="rounded-lg bg-white/10 px-3 py-1.5 font-medium hover:bg-white/20">GitHub ★</a>
@@ -120,8 +121,8 @@
         </div>
         <div class="card rounded-2xl border border-line p-6">
           <div class="mb-3 text-2xl">🤖</div>
-          <h3 class="font-semibold">CLI &amp; coding-agent access</h3>
-          <p class="mt-2 text-sm text-zinc-400">A <code>treescope</code> CLI inspects the hierarchy from your shell, and <code>treescope mcp</code> exposes it as <a href="https://modelcontextprotocol.io" class="underline hover:text-white">MCP</a> tools so coding agents can read the UI, find views and view snapshots.</p>
+          <h3 class="font-semibold">CLI, Python &amp; MCP for agents</h3>
+          <p class="mt-2 text-sm text-zinc-400"><code>treescope screenshot</code> lets a coding agent <em>see</em> the whole screen; <code>tree</code>/<code>find</code>/<code>inspect</code>/<code>set</code> drive the hierarchy. Ships as an npm CLI, a <code>pip install treescope-cli</code> Python client, an <a href="https://modelcontextprotocol.io" class="underline hover:text-white">MCP</a> server, and a ready Claude Code skill.</p>
         </div>
       </div>
     </section>
@@ -139,6 +140,55 @@
           </ul>
         </div>
         <img src="viewer-3d.png" alt="Exploded 3D view" class="shot w-full rounded-xl border border-line" />
+      </div>
+    </section>
+
+    <!-- Coding agents -->
+    <section id="agents" class="mx-auto max-w-5xl px-5 py-20">
+      <div class="text-center">
+        <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 text-xs text-zinc-300">
+          <span class="text-base">🤖</span> Built for coding agents
+        </div>
+        <h2 class="text-3xl font-bold">Let an agent <span class="text-swiftui">see</span> your UI</h2>
+        <p class="mx-auto mt-3 max-w-2xl text-zinc-400">
+          The same in-app server powers a CLI, a Python client and an
+          <a href="https://modelcontextprotocol.io" class="underline hover:text-white">MCP</a> server. Claude Code and
+          friends can screenshot the screen, walk the hierarchy, find views and live-edit — no browser needed.
+        </p>
+      </div>
+
+      <div class="mt-12 grid gap-5 lg:grid-cols-2">
+        <div class="card rounded-2xl border border-line p-6">
+          <h3 class="font-semibold">Register the MCP server</h3>
+          <p class="mt-1 text-sm text-zinc-400">One line — Node or Python, no local build:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code># Node (npm)
+claude mcp add treescope -- npx -y treescope-cli mcp
+
+# Python (PyPI)
+pip install treescope-cli
+claude mcp add treescope -- treescope mcp</code></pre>
+          <p class="mt-3 text-xs text-zinc-500">Tools: <code>screenshot</code> · <code>get_tree</code> · <code>find_nodes</code> · <code>inspect_node</code> · <code>get_snapshot</code> · <code>set_attribute</code> · <code>status</code>.</p>
+        </div>
+
+        <div class="card rounded-2xl border border-line p-6">
+          <h3 class="font-semibold">…or drive the CLI directly</h3>
+          <p class="mt-1 text-sm text-zinc-400">A typical agent loop:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 text-sm text-zinc-200"><code>treescope status                 # is the app reachable?
+treescope screenshot -o ui.png   # SEE the whole screen
+treescope tree --depth 3         # token-friendly hierarchy
+treescope find LoginButton       # locate a node → #obj:42
+treescope inspect obj:42         # properties + editable keys
+treescope set obj:42 alpha 0.5   # live-edit, then re-screenshot</code></pre>
+        </div>
+      </div>
+
+      <div class="mt-5 rounded-2xl border border-line card p-6 text-center">
+        <h3 class="font-semibold">🛠️ A ready-made Claude Code skill</h3>
+        <p class="mx-auto mt-2 max-w-2xl text-sm text-zinc-400">
+          Drop <code>.claude/skills/treescope/</code> into your project and your agent learns the whole loop —
+          <code>status → screenshot → tree/find → inspect → set</code> — plus how to start the server and recover
+          when the app isn't running.
+        </p>
       </div>
     </section>
 

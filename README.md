@@ -259,6 +259,16 @@ npm install
 npm run release        # tsc + vite build → single HTML → embed into TreescopeServer
 ```
 
+### CLI & Python clients
+
+Both clients speak the same protocol and have self-contained test suites (a mock server plus a real
+MCP client over stdio):
+
+```bash
+cd CLI    && npm install && npm test          # Node CLI + MCP
+cd python && pip install -e ".[test]" && pytest   # Python CLI + MCP
+```
+
 ---
 
 ## Roadmap

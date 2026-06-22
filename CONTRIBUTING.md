@@ -10,15 +10,21 @@ Sources/
   TreescopeProtocol/   Pure-Foundation wire model + JSON contract (mirrored by Web/src/protocol.ts)
   TreescopeServer/     Debug-only in-app runtime: capture engine + loopback HTTP/WebSocket server
 Web/                   The browser viewer (React + TypeScript + Tailwind + shadcn/ui)
+CLI/                   Node/TypeScript CLI + MCP server (npm: treescope-cli)
+python/                Python CLI + MCP server (PyPI: treescope-cli)
 Examples/
   TreescopeiOSDemo/    A real iOS app for Simulator end-to-end testing (xcodegen)
 Archive/               The superseded native macOS viewer (not built)
 ```
 
+The `CLI/`, `python/` and `Web/src/protocol.ts` clients all mirror the same `TreescopeProtocol`
+wire contract — keep them in sync when the protocol changes.
+
 ## Prerequisites
 
 - Xcode 16+ / a recent Swift toolchain (developed against Swift 6.2, swift-tools 5.9).
-- Node 18+ for the web viewer.
+- Node 18+ for the web viewer and the `CLI/` client.
+- Python 3.10+ for the `python/` client (optional).
 - Optional: [xcodegen](https://github.com/yonaskolb/XcodeGen) for the iOS example.
 
 ## Building & testing
@@ -29,6 +35,12 @@ swift test            # protocol, SwiftUI reflector, capture, live-state, WebSoc
 
 # Web viewer
 cd Web && npm install && npm run build
+
+# CLI + MCP (Node)
+cd CLI && npm install && npm test
+
+# CLI + MCP (Python)
+cd python && pip install -e ".[test]" && pytest
 
 # iOS Simulator example (optional)
 cd Examples/TreescopeiOSDemo && ./run.sh
