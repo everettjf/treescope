@@ -10,6 +10,8 @@
   <a href="https://everettjf.github.io/treescope/"><img src="https://img.shields.io/badge/docs-website-0a84ff" alt="Website"></a>
   <img src="https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS-blue" alt="Platforms">
   <img src="https://img.shields.io/badge/Swift-5.9%2B-orange" alt="Swift">
+  <a href="https://www.npmjs.com/package/treescope-cli"><img src="https://img.shields.io/npm/v/treescope-cli?logo=npm&label=npm" alt="npm"></a>
+  <a href="https://pypi.org/project/treescope-cli/"><img src="https://img.shields.io/pypi/v/treescope-cli?logo=pypi&logoColor=white&label=PyPI" alt="PyPI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
 </p>
 

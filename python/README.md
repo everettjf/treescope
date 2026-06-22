@@ -1,5 +1,8 @@
 # treescope-cli (Python)
 
+[![PyPI](https://img.shields.io/pypi/v/treescope-cli?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/treescope-cli/)
+[![Python](https://img.shields.io/pypi/pyversions/treescope-cli?logo=python&logoColor=white)](https://pypi.org/project/treescope-cli/)
+
 A Python command-line client **and MCP server** for the
 [Treescope](https://github.com/everettjf/treescope) runtime view inspector — a sibling of the
 [Node CLI](https://github.com/everettjf/treescope/tree/main/CLI), speaking the same loopback

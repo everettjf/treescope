@@ -1,5 +1,7 @@
 # Treescope CLI
 
+[![npm](https://img.shields.io/npm/v/treescope-cli?logo=npm&label=npm)](https://www.npmjs.com/package/treescope-cli)
+
 A command-line client for the [Treescope](../README.md) runtime view inspector.
 
 The Treescope runtime embeds a small loopback HTTP + WebSocket server inside your
